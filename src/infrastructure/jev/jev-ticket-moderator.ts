@@ -1,36 +1,27 @@
+import { OpenRouter } from '@openrouter/sdk';
 import { Ticket, TicketModeration } from '../../domain/ticket';
 import { TicketModerator } from '../../ports/ticket-moderator';
 
 export interface JevConfig {
   apiKey: string;
   model?: string;
-  baseUrl?: string;
 }
 
 export class JevTicketModerator implements TicketModerator {
-  private apiKey: string;
+  private client: OpenRouter;
   private model: string;
-  private baseUrl: string;
 
   constructor(config: JevConfig) {
-    this.apiKey = config.apiKey;
-    this.model = config.model ?? 'anthropic/claude-haiku-4.5';
-    this.baseUrl = config.baseUrl ?? 'https://openrouter.ai/api/v1';
+    this.client = new OpenRouter({ apiKey: config.apiKey });
+    this.model = config.model ?? 'typesafe/jev-router';
   }
 
   async moderate(ticket: Ticket): Promise<TicketModeration> {
-    const response = await fetch(`${this.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const response = await this.client.chat.send({
+      chatRequest: {
         model: this.model,
-        max_tokens: 1024,
         tools: [
           {
-            type: 'function',
             function: {
               name: 'classify_ticket',
               description:
@@ -74,41 +65,30 @@ export class JevTicketModerator implements TicketModerator {
                 ],
               },
             },
+            type: 'function' as const,
           },
         ],
-        tool_choice: {
-          type: 'function',
+        toolChoice: {
           function: { name: 'classify_ticket' },
+          type: 'function' as const,
         },
         messages: [
           {
-            role: 'system',
+            role: 'system' as const,
             content:
               'You are a support ticket classifier. Classify tickets accurately with calibrated confidence scores.',
           },
           {
-            role: 'user',
+            role: 'user' as const,
             content: `Subject: ${ticket.subject}\nMessage: ${ticket.message}`,
           },
         ],
-      }),
+      },
     });
 
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`Jev API error (${response.status}): ${body}`);
-    }
-
-    const data = (await response.json()) as {
-      choices?: {
-        message?: {
-          tool_calls?: { function?: { arguments?: string } }[];
-        };
-      }[];
-    };
-
+    if (!('choices' in response)) throw new Error('Unexpected response');
     const args =
-      data.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+      response.choices?.[0]?.message?.toolCalls?.[0]?.function?.arguments;
     if (!args) throw new Error('No classification in response');
     return JSON.parse(args) as TicketModeration;
   }
