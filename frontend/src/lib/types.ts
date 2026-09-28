@@ -3,6 +3,8 @@ export type Ticket = {
   message: string
   status: string
   createdAt: string
+  moderation?: Moderation
+  routing?: RoutingDecision
 }
 
 export type Moderation = {
