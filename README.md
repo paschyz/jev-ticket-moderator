@@ -4,6 +4,10 @@ AI-powered support ticket moderation and routing system. Classifies incoming tic
 
 Built as a portfolio project demonstrating hexagonal architecture, strict TDD, and clean separation between business logic and AI providers.
 
+<img width="1092" height="482" alt="image" src="https://github.com/user-attachments/assets/0bd1dd92-ca8b-4e2b-94ac-5ac9fbd7408d" />
+After Jev analysis :
+<img width="1115" height="465" alt="image" src="https://github.com/user-attachments/assets/d461ca63-4bde-4e33-a74f-e4b9766e72be" />
+
 ## Features
 
 - **Ticket Creation** — Submit support tickets via REST API
