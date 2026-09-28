@@ -5,7 +5,7 @@ export class FakeTicketModerator implements TicketModerator {
   async moderate(ticket: Ticket): Promise<TicketModeration> {
     const seed = this.hash(ticket.id);
     const rng = this.seededRandom(seed);
-    const text = `${ticket.subject} ${ticket.message}`.toLowerCase();
+    const text = ticket.message.toLowerCase();
 
     const category = this.analyzeCategory(text);
     const categoryConfidence = this.analyzeConfidence(text, category, rng);

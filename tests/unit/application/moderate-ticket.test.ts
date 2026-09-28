@@ -7,7 +7,6 @@ import { Ticket } from '../../../src/domain/ticket';
 function buildTicket(overrides: Partial<Ticket> = {}): Ticket {
   return {
     id: 'ticket-1',
-    subject: 'Help',
     message: 'Need help',
     status: 'open',
     createdAt: new Date('2026-01-01'),

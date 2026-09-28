@@ -9,7 +9,6 @@ export type TicketStatus = 'open' | 'moderated' | 'routed' | 'manual_review';
 
 export interface Ticket {
   id: string;
-  subject: string;
   message: string;
   status: TicketStatus;
   createdAt: Date;

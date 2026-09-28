@@ -80,7 +80,7 @@ export class JevTicketModerator implements TicketModerator {
           },
           {
             role: 'user' as const,
-            content: `Subject: ${ticket.subject}\nMessage: ${ticket.message}`,
+            content: ticket.message,
           },
         ],
       },

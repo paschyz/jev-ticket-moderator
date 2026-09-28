@@ -10,9 +10,8 @@ describe.skipIf(!apiKey)('JevTicketModerator (integration)', () => {
       const moderator = new JevTicketModerator({ apiKey: apiKey! });
       const moderation = await moderator.moderate({
         id: 'test-1',
-        subject: 'Cannot download my invoice',
         message:
-          'I need to download my invoice from last month but the page returns a 500 error',
+          'Cannot download my invoice. I need to download my invoice from last month but the page returns a 500 error',
         status: 'open',
         createdAt: new Date(),
       });

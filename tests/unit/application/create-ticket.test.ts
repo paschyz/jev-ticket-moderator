@@ -8,11 +8,9 @@ describe('CreateTicket', () => {
     const createTicket = new CreateTicket(repository);
 
     const ticket = await createTicket.execute({
-      subject: 'Cannot login',
       message: 'I get an error when trying to login',
     });
 
-    expect(ticket.subject).toBe('Cannot login');
     expect(ticket.message).toBe('I get an error when trying to login');
     expect(ticket.status).toBe('open');
     expect(ticket.id).toBeTruthy();
@@ -24,7 +22,6 @@ describe('CreateTicket', () => {
     const createTicket = new CreateTicket(repository);
 
     const ticket = await createTicket.execute({
-      subject: 'Help',
       message: 'Need help',
     });
 
