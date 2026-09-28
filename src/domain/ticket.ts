@@ -12,6 +12,8 @@ export interface Ticket {
   message: string;
   status: TicketStatus;
   createdAt: Date;
+  moderation?: TicketModeration;
+  routing?: RoutingDecision;
 }
 
 export interface TicketModeration {

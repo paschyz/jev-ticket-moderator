@@ -12,7 +12,7 @@ export class ModerateTicket {
     const ticket = await this.ticketRepository.findById(ticketId);
     if (!ticket) throw new Error('Ticket not found');
     const moderation = await this.ticketModerator.moderate(ticket);
-    await this.ticketRepository.save({ ...ticket, status: 'moderated' });
+    await this.ticketRepository.save({ ...ticket, status: 'moderated', moderation });
     return moderation;
   }
 }

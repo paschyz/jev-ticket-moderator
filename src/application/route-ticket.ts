@@ -15,7 +15,7 @@ export class RouteTicket {
     const decision = decideRouting(moderation);
     const newStatus =
       decision.action === 'route' ? ('routed' as const) : ('manual_review' as const);
-    await this.ticketRepository.save({ ...ticket, status: newStatus });
+    await this.ticketRepository.save({ ...ticket, status: newStatus, routing: decision });
 
     return decision;
   }
