@@ -95,6 +95,15 @@ make architecture     # Check dependency rules
 make check            # All validations (lint + typecheck + architecture + test)
 ```
 
+## Frontend Design Rules
+
+- Read `frontend/DESIGN.md` before any frontend modification
+- Use shadcn/ui components (`@/components/ui/`) — don't reimplement primitives
+- Follow the palette tokens defined in DESIGN.md; override shadcn defaults in `index.css` `:root`
+- Tailwind utilities only — no inline styles, no CSS modules
+- Geist font (already configured via shadcn Nova preset)
+- No decorative motion. Transitions only on user-triggered actions.
+
 ## Jev Integration
 
 Jev is isolated behind the `TicketModerator` port (`src/ports/ticket-moderator.ts`).

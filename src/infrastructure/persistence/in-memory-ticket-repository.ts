@@ -11,4 +11,8 @@ export class InMemoryTicketRepository implements TicketRepository {
   async findById(id: string): Promise<Ticket | null> {
     return this.tickets.get(id) ?? null;
   }
+
+  async findAll(): Promise<Ticket[]> {
+    return Array.from(this.tickets.values());
+  }
 }

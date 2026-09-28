@@ -1,5 +1,6 @@
 import express from 'express';
 import { CreateTicket } from '../../application/create-ticket';
+import { ListTickets } from '../../application/list-tickets';
 import { ModerateTicket } from '../../application/moderate-ticket';
 import { RouteTicket } from '../../application/route-ticket';
 import { TicketRepository } from '../../ports/ticket-repository';
@@ -12,12 +13,18 @@ export function createApp(deps: {
   const app = express();
   app.use(express.json());
 
+  const listTickets = new ListTickets(deps.ticketRepository);
   const createTicket = new CreateTicket(deps.ticketRepository);
   const moderateTicket = new ModerateTicket(
     deps.ticketRepository,
     deps.ticketModerator,
   );
   const routeTicket = new RouteTicket(deps.ticketRepository);
+
+  app.get('/tickets', async (_req, res) => {
+    const tickets = await listTickets.execute();
+    res.json(tickets);
+  });
 
   app.post('/tickets', async (req, res) => {
     try {

@@ -30,7 +30,6 @@ describe('Ticket moderation flow', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        subject: 'Invoice issue',
         message: 'Cannot download my invoice',
       }),
     });
@@ -67,7 +66,7 @@ describe('Ticket moderation flow', () => {
     const createRes = await fetch(`${baseUrl}/tickets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject: 'Hmm', message: 'unclear' }),
+      body: JSON.stringify({ message: 'unclear' }),
     });
     const ticket = await createRes.json();
 
@@ -91,6 +90,22 @@ describe('Ticket moderation flow', () => {
     });
     const decision = await routeRes.json();
     expect(decision.action).toBe('manual_review');
+  });
+
+  it('GET /tickets returns 200 with array of tickets', async () => {
+    const createRes = await fetch(`${baseUrl}/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'List test body' }),
+    });
+    expect(createRes.status).toBe(201);
+
+    const listRes = await fetch(`${baseUrl}/tickets`);
+    expect(listRes.status).toBe(200);
+    const tickets = await listRes.json();
+    expect(Array.isArray(tickets)).toBe(true);
+    expect(tickets.length).toBeGreaterThanOrEqual(1);
+    expect(tickets.some((t: { message: string }) => t.message === 'List test body')).toBe(true);
   });
 
   it('returns 404 for unknown ticket', async () => {
