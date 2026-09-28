@@ -108,7 +108,10 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <h1 className="text-base font-semibold tracking-tight">TicketFlow</h1>
-            <StatsBar tickets={tickets} />
+            <StatsBar
+              tickets={tickets}
+              onStatusFilter={status => setFilters(f => ({ ...f, status }))}
+            />
           </div>
           <CreateTicketDialog onCreate={createTicket} />
         </div>

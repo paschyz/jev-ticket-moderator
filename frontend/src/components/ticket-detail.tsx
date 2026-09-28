@@ -1,39 +1,23 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DEFAULT_THRESHOLDS } from '@/lib/constants'
+import { statusLabel, statusVariant, urgencyVariant } from '@/lib/ticket-variants'
 import type { Moderation, Ticket } from '@/lib/types'
+import { cn } from 'cn'
 
 type Thresholds = typeof DEFAULT_THRESHOLDS
-
-function statusVariant(status: string) {
-  switch (status) {
-    case 'routed': return 'default' as const
-    case 'moderated': return 'secondary' as const
-    case 'manual_review': return 'destructive' as const
-    default: return 'outline' as const
-  }
-}
-
-function urgencyVariant(urgency: string) {
-  switch (urgency) {
-    case 'critical': case 'high': return 'destructive' as const
-    case 'medium': return 'secondary' as const
-    default: return 'outline' as const
-  }
-}
 
 function pct(v: number) { return Math.round(v * 100) }
 
 function barColor(value: number, inverted: boolean) {
   const high = inverted ? value > 0.6 : value >= 0.7
   const low = inverted ? value < 0.3 : value < 0.4
-  if (high) return inverted ? 'bg-destructive' : 'bg-emerald-600'
-  if (low) return inverted ? 'bg-emerald-600' : 'bg-destructive'
-  return 'bg-amber-500'
+  if (high) return inverted ? 'bg-destructive' : 'bg-success'
+  if (low) return inverted ? 'bg-success' : 'bg-destructive'
+  return 'bg-warning'
 }
 
 function ConfidenceBar({
@@ -91,6 +75,7 @@ export function TicketDetail({
   error: string
 }) {
   const [overrideQueue, setOverrideQueue] = useState('')
+  const [scoresOpen, setScoresOpen] = useState(false)
 
   if (!ticket) {
     return (
@@ -100,115 +85,126 @@ export function TicketDetail({
     )
   }
 
+  const m = ticket.moderation
+
   return (
-    <div className="space-y-4">
-      {error && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-          {error}
-        </div>
-      )}
-      {loading && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary animate-pulse">
-          {loading}
-        </div>
-      )}
-
-      {/* Ticket info */}
-      <Card>
-        <CardHeader className="flex-row items-center justify-between gap-2">
-          <Badge variant={statusVariant(ticket.status)}>
-            {ticket.status === 'manual_review' ? 'Needs review' : ticket.status}
-          </Badge>
-          {ticket.moderation?.urgency && (
-            <Badge variant={urgencyVariant(ticket.moderation.urgency)}>
-              {ticket.moderation.urgency}
-            </Badge>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <p className="text-sm leading-relaxed">{ticket.message}</p>
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {ticket.id} · {new Date(ticket.createdAt).toLocaleString()}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Moderation scores */}
-      {ticket.moderation && (
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Analysis</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Category</p>
-                <Badge variant="secondary" className="capitalize">{ticket.moderation.category}</Badge>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Urgency</p>
-                <Badge variant={urgencyVariant(ticket.moderation.urgency)} className="capitalize">
-                  {ticket.moderation.urgency}
-                </Badge>
-              </div>
+    <div className="divide-y divide-border max-w-2xl">
+      {/* Status messages */}
+      {(error || loading) && (
+        <div className="pb-4 space-y-2">
+          {error && (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              {error}
             </div>
-            <div className="space-y-3">
+          )}
+          {loading && (
+            <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground animate-pulse">
+              {loading}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Header: status + urgency + delete */}
+      <div className="pb-5">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={statusVariant(ticket.status)}>
+              {statusLabel(ticket.status)}
+            </Badge>
+            {m?.urgency && (
+              <Badge variant={urgencyVariant(m.urgency)} className="capitalize">
+                {m.urgency}
+              </Badge>
+            )}
+          </div>
+          {/* ponytail: window.confirm for delete; upgrade to AlertDialog if ops team finds accidental deletes */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive shrink-0 -mt-0.5"
+            onClick={() => window.confirm('Delete this ticket?') && onDelete(ticket.id)}
+            disabled={!!loading}
+          >
+            Delete
+          </Button>
+        </div>
+        <p className="text-base leading-relaxed">{ticket.message}</p>
+        <p className="text-xs text-muted-foreground tabular-nums mt-2">
+          {ticket.id} · {new Date(ticket.createdAt).toLocaleString()}
+        </p>
+      </div>
+
+      {/* AI analysis */}
+      {m && (
+        <div className="py-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap text-sm">
+              <span className="text-muted-foreground text-xs font-medium tracking-wide">AI</span>
+              <Badge variant="outline" className="capitalize">{m.category}</Badge>
+              <Badge variant={urgencyVariant(m.urgency)} className="capitalize">{m.urgency}</Badge>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {pct(m.categoryConfidence)}% confident
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setScoresOpen(v => !v)}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            >
+              {scoresOpen ? 'Hide scores' : 'Show scores'}
+            </button>
+          </div>
+          {scoresOpen && (
+            <div className="space-y-3 mt-4">
               <ConfidenceBar
                 label="Classification confidence"
-                value={ticket.moderation.categoryConfidence}
+                value={m.categoryConfidence}
                 threshold={thresholds.categoryConfidence}
                 tooltip="How confident the AI is about the category. Below threshold → manual review."
               />
               <ConfidenceBar
                 label="Human review probability"
-                value={ticket.moderation.humanReviewProbability}
+                value={m.humanReviewProbability}
                 threshold={thresholds.humanReview}
                 inverted
                 tooltip="Estimated probability a human should review this. Above threshold → manual review."
               />
               <ConfidenceBar
                 label="Abusive content probability"
-                value={ticket.moderation.abusiveProbability}
+                value={m.abusiveProbability}
                 threshold={thresholds.abusive}
                 inverted
                 tooltip="Probability of abusive content. Above threshold → manual review."
               />
             </div>
-          </CardContent>
-        </Card>
+          )}
+        </div>
       )}
 
-      {/* Routing decision */}
+      {/* Routing result */}
       {ticket.routing && (
-        <Card className={
-          ticket.routing.action === 'route'
-            ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950'
-            : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
-        }>
-          <CardHeader>
-            <CardTitle>Routing Decision</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {ticket.routing.action === 'route' ? (
-              <p className="text-sm">
-                Routed to <Badge className="capitalize">{ticket.routing.queue}</Badge> queue
-              </p>
-            ) : (
-              <p className="text-sm text-amber-800 dark:text-amber-200">
-                Sent to manual review: {ticket.routing.reason}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <div className={cn(
+          'py-5 border-l-2 pl-4 -ml-4',
+          ticket.routing.action === 'route' ? 'border-l-success' : 'border-l-warning'
+        )}>
+          {ticket.routing.action === 'route' ? (
+            <p className="text-sm">
+              Routed to <span className="font-medium capitalize">{ticket.routing.queue}</span> queue
+            </p>
+          ) : (
+            <p className="text-sm text-warning">
+              Manual review: {ticket.routing.reason}
+            </p>
+          )}
+        </div>
       )}
 
       {/* Override routing for manual_review */}
       {ticket.status === 'manual_review' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Override Routing</CardTitle>
-          </CardHeader>
-          <CardContent className="flex gap-2">
+        <div className="py-5">
+          <p className="text-xs text-muted-foreground mb-2">Route to queue manually</p>
+          <div className="flex gap-2">
             <Select value={overrideQueue} onValueChange={setOverrideQueue}>
               <SelectTrigger className="flex-1">
                 <SelectValue placeholder="Select queue..." />
@@ -228,40 +224,34 @@ export function TicketDetail({
             >
               Route
             </Button>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Actions */}
-      <div className="flex gap-2">
-        {ticket.status === 'open' && (
-          <Button
-            className="flex-1"
-            variant="secondary"
-            onClick={() => onModerate(ticket.id)}
-            disabled={!!loading}
-          >
-            Analyze with Jev
-          </Button>
-        )}
-        {ticket.status === 'moderated' && ticket.moderation && (
-          <Button
-            className="flex-1"
-            onClick={() => onRoute(ticket.id, ticket.moderation!)}
-            disabled={!!loading}
-          >
-            Route Ticket
-          </Button>
-        )}
-        {/* ponytail: window.confirm for delete; upgrade to AlertDialog if ops team finds accidental deletes */}
-        <Button
-          variant="destructive"
-          onClick={() => window.confirm('Delete this ticket?') && onDelete(ticket.id)}
-          disabled={!!loading}
-        >
-          Delete
-        </Button>
-      </div>
+      {/* Primary actions */}
+      {(ticket.status === 'open' || ticket.status === 'moderated') && (
+        <div className="pt-5">
+          {ticket.status === 'open' && (
+            <Button
+              className="w-full"
+              variant="secondary"
+              onClick={() => onModerate(ticket.id)}
+              disabled={!!loading}
+            >
+              Analyze with Jev
+            </Button>
+          )}
+          {ticket.status === 'moderated' && ticket.moderation && (
+            <Button
+              className="w-full"
+              onClick={() => onRoute(ticket.id, ticket.moderation!)}
+              disabled={!!loading}
+            >
+              Route ticket
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

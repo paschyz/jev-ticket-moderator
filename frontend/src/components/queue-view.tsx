@@ -6,7 +6,7 @@ type QueueBucket = {
   key: string
   label: string
   tickets: Ticket[]
-  variant: 'destructive' | 'secondary' | 'outline' | 'default'
+  variant: 'destructive' | 'warning' | 'success' | 'secondary' | 'outline' | 'default'
 }
 
 function bucketTickets(tickets: Ticket[]): QueueBucket[] {
@@ -31,12 +31,12 @@ function bucketTickets(tickets: Ticket[]): QueueBucket[] {
   const QUEUE_META: QueueBucket[] = [
     { key: 'manual_review', label: 'Needs Review', variant: 'destructive', tickets: [] },
     { key: 'open', label: 'Open (unanalyzed)', variant: 'outline', tickets: [] },
-    { key: 'moderated', label: 'Awaiting routing', variant: 'secondary', tickets: [] },
-    { key: 'billing', label: 'Billing', variant: 'default', tickets: [] },
-    { key: 'technical', label: 'Technical', variant: 'default', tickets: [] },
-    { key: 'account', label: 'Account', variant: 'default', tickets: [] },
-    { key: 'sales', label: 'Sales', variant: 'default', tickets: [] },
-    { key: 'other', label: 'Other', variant: 'default', tickets: [] },
+    { key: 'moderated', label: 'Awaiting routing', variant: 'warning', tickets: [] },
+    { key: 'billing', label: 'Billing', variant: 'success', tickets: [] },
+    { key: 'technical', label: 'Technical', variant: 'success', tickets: [] },
+    { key: 'account', label: 'Account', variant: 'success', tickets: [] },
+    { key: 'sales', label: 'Sales', variant: 'success', tickets: [] },
+    { key: 'other', label: 'Other', variant: 'success', tickets: [] },
   ]
 
   return QUEUE_META
