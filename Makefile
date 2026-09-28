@@ -1,4 +1,4 @@
-.PHONY: help install dev build test test-unit test-integration test-acceptance lint format typecheck architecture check
+.PHONY: help install dev build test test-unit test-integration test-acceptance lint format typecheck architecture check frontend frontend-install frontend-build
 
 help:
 	@echo "Targets:"
@@ -50,3 +50,12 @@ architecture:
 
 check: typecheck lint architecture test
 	@echo "All checks passed"
+
+frontend-install:
+	cd frontend && npm install
+
+frontend:
+	cd frontend && npx vite
+
+frontend-build:
+	cd frontend && npx vite build
