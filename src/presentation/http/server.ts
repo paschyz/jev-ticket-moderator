@@ -9,7 +9,10 @@ const app = express();
 app.use(express.json());
 
 const ticketRepository = new InMemoryTicketRepository();
-const ticketModerator = new JevTicketModerator();
+const ticketModerator = new JevTicketModerator({
+  apiKey: process.env.OPENROUTER_API_KEY ?? '',
+  model: process.env.OPENROUTER_MODEL,
+});
 
 const createTicket = new CreateTicket(ticketRepository);
 const moderateTicket = new ModerateTicket(ticketRepository, ticketModerator);

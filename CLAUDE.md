@@ -98,12 +98,10 @@ make check            # All validations (lint + typecheck + architecture + test)
 ## Jev Integration
 
 Jev is isolated behind the `TicketModerator` port (`src/ports/ticket-moderator.ts`).
-- `JevTicketModerator` — real adapter, not yet implemented (TODO)
+- `JevTicketModerator` — calls Claude via OpenRouter (native fetch, tool use for structured output)
 - `FakeTicketModerator` — test fake in `tests/fakes/`
 
-When ready to connect Jev:
-1. Implement `JevTicketModerator` in `src/infrastructure/jev/`
-2. No other code changes needed (port abstraction protects the rest)
+Env vars: `OPENROUTER_API_KEY` (required for moderation), `OPENROUTER_MODEL` (optional, default `anthropic/claude-haiku-4.5`).
 
 ## Project Structure
 
