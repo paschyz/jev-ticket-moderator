@@ -19,3 +19,11 @@ export async function get<T>(url: string): Promise<T> {
   }
   return res.json()
 }
+
+export async function del(url: string): Promise<void> {
+  const res = await fetch(url, { method: 'DELETE' })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || res.statusText)
+  }
+}

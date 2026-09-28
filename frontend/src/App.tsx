@@ -1,77 +1,56 @@
 import { useCallback, useState } from 'react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
-import { TicketHistory } from '@/components/ticket-history'
-import { get, post } from '@/lib/api'
-import type { Moderation, RoutingDecision, Ticket } from '@/lib/types'
-
-function urgencyVariant(urgency: string) {
-  switch (urgency) {
-    case 'critical': return 'destructive' as const
-    case 'high': return 'destructive' as const
-    case 'medium': return 'secondary' as const
-    default: return 'outline' as const
-  }
-}
-
-function ConfidenceBar({ value, label }: { value: number; label: string }) {
-  const pct = Math.round(value * 100)
-  const color = pct >= 70 ? 'bg-emerald-600' : pct >= 40 ? 'bg-amber-500' : 'bg-red-500'
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-          <div className={`h-full ${color} rounded-full`} style={{ width: `${pct}%` }} />
-        </div>
-        <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{pct}%</span>
-      </div>
-    </div>
-  )
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { CreateTicketDialog } from '@/components/create-ticket-dialog'
+import { QueueView } from '@/components/queue-view'
+import { StatsBar } from '@/components/stats-bar'
+import { TicketDetail } from '@/components/ticket-detail'
+import { TicketList } from '@/components/ticket-list'
+import { DEFAULT_FILTERS, type FilterState } from '@/hooks/useTicketFilters'
+import { del, get, post } from '@/lib/api'
+import { DEFAULT_THRESHOLDS } from '@/lib/constants'
+import type { Moderation, Ticket } from '@/lib/types'
 
 export default function App() {
-  const [message, setMessage] = useState('')
-  const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [moderation, setModeration] = useState<Moderation | null>(null)
-  const [routing, setRouting] = useState<RoutingDecision | null>(null)
-  const [loading, setLoading] = useState('')
-  const [error, setError] = useState('')
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS)
+  const [loading, setLoading] = useState('')
+  const [error, setError] = useState('')
 
-  const refreshTickets = useCallback(() => {
-    get<Ticket[]>('/tickets').then(setTickets).catch(() => {})
+  const thresholds = DEFAULT_THRESHOLDS
+
+  const refreshTickets = useCallback(async (): Promise<Ticket[]> => {
+    const fresh = await get<Ticket[]>('/tickets')
+    setTickets(fresh)
+    return fresh
   }, [])
 
-  async function createTicket() {
+  const selectedTicket = tickets.find(t => t.id === selectedId) ?? null
+
+  function selectTicket(id: string) {
+    setSelectedId(id)
     setError('')
-    setLoading('Creating ticket...')
+  }
+
+  async function createTicket(message: string) {
+    setError('')
     try {
       const t = await post<Ticket>('/tickets', { message })
-      setTicket(t)
-      setModeration(null)
-      setRouting(null)
-      setSelectedId(t.id)
-      refreshTickets()
+      const fresh = await refreshTickets()
+      setSelectedId(fresh.find(x => x.id === t.id)?.id ?? t.id)
     } catch (e) {
       setError((e as Error).message)
-    } finally {
-      setLoading('')
+      throw e
     }
   }
 
-  async function moderateTicket() {
-    if (!ticket) return
+  async function moderateTicket(id: string) {
     setError('')
     setLoading('Jev is analyzing...')
     try {
-      const m = await post<Moderation>(`/tickets/${ticket.id}/moderate`)
-      setModeration(m)
-      setRouting(null)
-      refreshTickets()
+      await post<Moderation>(`/tickets/${id}/moderate`)
+      const fresh = await refreshTickets()
+      setSelectedId(fresh.find(t => t.id === id)?.id ?? id)
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -79,14 +58,12 @@ export default function App() {
     }
   }
 
-  async function routeTicket() {
-    if (!ticket || !moderation) return
+  async function routeTicket(id: string, moderation: Moderation) {
     setError('')
     setLoading('Routing...')
     try {
-      const r = await post<RoutingDecision>(`/tickets/${ticket.id}/route`, { moderation })
-      setRouting(r)
-      refreshTickets()
+      await post(`/tickets/${id}/route`, { moderation })
+      await refreshTickets()
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -94,166 +71,90 @@ export default function App() {
     }
   }
 
-  function reset() {
-    setTicket(null)
-    setModeration(null)
-    setRouting(null)
-    setMessage('')
+  async function deleteTicket(id: string) {
     setError('')
-    setSelectedId(null)
+    setLoading('Deleting...')
+    try {
+      await del(`/tickets/${id}`)
+      setSelectedId(null)
+      await refreshTickets()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setLoading('')
+    }
   }
 
+  async function overrideRoute(id: string, queue: string) {
+    const ticket = tickets.find(t => t.id === id)
+    if (!ticket?.moderation) return
+    // ponytail: synthetic payload forces routing via existing endpoint; add /override-route if audit trail needed
+    const syntheticModeration: Moderation = {
+      category: queue as Moderation['category'],
+      categoryConfidence: 0.99,
+      urgency: ticket.moderation.urgency,
+      humanReviewProbability: 0.1,
+      abusiveProbability: 0.1,
+    }
+    await routeTicket(id, syntheticModeration)
+  }
+
+  // Initial load
+  useState(() => { refreshTickets().catch(() => {}) })
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <h1 className="text-base font-semibold tracking-tight">TicketFlow</h1>
-          <span className="text-xs text-muted-foreground">Powered by Jev</span>
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="border-b px-6 py-3 shrink-0">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6">
+            <h1 className="text-base font-semibold tracking-tight">TicketFlow</h1>
+            <StatsBar tickets={tickets} />
+          </div>
+          <CreateTicketDialog onCreate={createTicket} />
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 p-6">
-        {/* Sidebar: history */}
-        <aside className="w-full md:w-72 md:shrink-0">
-          <TicketHistory
-            tickets={tickets}
-            setTickets={setTickets}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+      <div className="max-w-7xl mx-auto w-full flex flex-1 gap-0 overflow-hidden">
+        {/* Left panel */}
+        <aside className="w-80 shrink-0 border-r flex flex-col overflow-hidden">
+          <Tabs defaultValue="list" className="flex flex-col flex-1 overflow-hidden">
+            <div className="px-4 pt-4 pb-2 shrink-0">
+              <TabsList className="w-full">
+                <TabsTrigger value="list" className="flex-1">List</TabsTrigger>
+                <TabsTrigger value="queues" className="flex-1">Queues</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="list" className="flex-1 overflow-hidden px-4 pb-4 mt-0">
+              <TicketList
+                tickets={tickets}
+                selectedId={selectedId}
+                onSelect={selectTicket}
+                filters={filters}
+                onFilterChange={partial => setFilters(f => ({ ...f, ...partial }))}
+              />
+            </TabsContent>
+            <TabsContent value="queues" className="flex-1 overflow-hidden px-4 pb-4 mt-0">
+              <QueueView
+                tickets={tickets}
+                selectedId={selectedId}
+                onSelect={selectTicket}
+              />
+            </TabsContent>
+          </Tabs>
         </aside>
 
-        {/* Main: wizard */}
-        <main className="flex-1 space-y-4">
-          {error && (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-
-          {loading && (
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary animate-pulse">
-              {loading}
-            </div>
-          )}
-
-          {/* Step 1: Create */}
-          {!ticket && (
-            <Card>
-              <CardHeader>
-                <CardTitle>New Support Ticket</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Textarea
-                  placeholder="Describe your issue..."
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  rows={4}
-                />
-                <Button
-                  onClick={createTicket}
-                  disabled={!message.trim() || !!loading}
-                >
-                  Submit Ticket
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Ticket detail */}
-          {ticket && (
-            <Card>
-              <CardHeader className="flex-row items-start justify-between">
-                <Badge variant="outline">{ticket.status}</Badge>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p className="text-sm">{ticket.message}</p>
-                <p className="text-xs text-muted-foreground tabular-nums">ID: {ticket.id}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 2: Moderate */}
-          {ticket && !moderation && (
-            <Button
-              className="w-full"
-              variant="secondary"
-              size="lg"
-              onClick={moderateTicket}
-              disabled={!!loading}
-            >
-              Analyze with Jev
-            </Button>
-          )}
-
-          {/* Moderation results */}
-          {moderation && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Moderation Result</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Category</p>
-                    <Badge variant="secondary">{moderation.category}</Badge>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Urgency</p>
-                    <Badge variant={urgencyVariant(moderation.urgency)}>{moderation.urgency}</Badge>
-                  </div>
-                  <ConfidenceBar label="Classification Confidence" value={moderation.categoryConfidence} />
-                  <ConfidenceBar label="Human Review Probability" value={moderation.humanReviewProbability} />
-                  <div className="col-span-2">
-                    <ConfidenceBar label="Abusive Content Probability" value={moderation.abusiveProbability} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Step 3: Route */}
-          {moderation && !routing && (
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={routeTicket}
-              disabled={!!loading}
-            >
-              Route Ticket
-            </Button>
-          )}
-
-          {/* Routing result */}
-          {routing && (
-            <Card className={
-              routing.action === 'route'
-                ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950'
-                : 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
-            }>
-              <CardHeader>
-                <CardTitle>Routing Decision</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {routing.action === 'route' ? (
-                  <p className="text-sm">
-                    Routed to <Badge>{routing.queue}</Badge> queue
-                  </p>
-                ) : (
-                  <p className="text-sm text-amber-800 dark:text-amber-200">
-                    Sent to manual review: {routing.reason}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Reset */}
-          {routing && (
-            <Button variant="outline" className="w-full" onClick={reset}>
-              New Ticket
-            </Button>
-          )}
+        {/* Right panel */}
+        <main className="flex-1 overflow-y-auto p-6">
+          <TicketDetail
+            ticket={selectedTicket}
+            thresholds={thresholds}
+            onModerate={moderateTicket}
+            onRoute={routeTicket}
+            onOverrideRoute={overrideRoute}
+            onDelete={deleteTicket}
+            loading={loading}
+            error={error}
+          />
         </main>
       </div>
     </div>

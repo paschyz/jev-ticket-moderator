@@ -1,5 +1,6 @@
 import express from 'express';
 import { CreateTicket } from '../../application/create-ticket';
+import { DeleteTicket } from '../../application/delete-ticket';
 import { ListTickets } from '../../application/list-tickets';
 import { ModerateTicket } from '../../application/moderate-ticket';
 import { RouteTicket } from '../../application/route-ticket';
@@ -20,6 +21,7 @@ export function createApp(deps: {
     deps.ticketModerator,
   );
   const routeTicket = new RouteTicket(deps.ticketRepository);
+  const deleteTicket = new DeleteTicket(deps.ticketRepository);
 
   app.get('/tickets', async (_req, res) => {
     const tickets = await listTickets.execute();
@@ -56,6 +58,17 @@ export function createApp(deps: {
     } catch (err) {
       const message = (err as Error).message;
       const status = message === 'Ticket not found' ? 404 : 400;
+      res.status(status).json({ error: message });
+    }
+  });
+
+  app.delete('/tickets/:id', async (req, res) => {
+    try {
+      await deleteTicket.execute(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      const message = (err as Error).message;
+      const status = message === 'Ticket not found' ? 404 : 500;
       res.status(status).json({ error: message });
     }
   });

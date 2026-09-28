@@ -114,4 +114,25 @@ describe('Ticket moderation flow', () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it('DELETE /tickets/:id removes the ticket and returns 204', async () => {
+    const createRes = await fetch(`${baseUrl}/tickets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'To be deleted' }),
+    });
+    const ticket = await createRes.json();
+
+    const deleteRes = await fetch(`${baseUrl}/tickets/${ticket.id}`, { method: 'DELETE' });
+    expect(deleteRes.status).toBe(204);
+
+    const listRes = await fetch(`${baseUrl}/tickets`);
+    const tickets = await listRes.json();
+    expect(tickets.some((t: { id: string }) => t.id === ticket.id)).toBe(false);
+  });
+
+  it('DELETE /tickets/:id returns 404 for unknown ticket', async () => {
+    const res = await fetch(`${baseUrl}/tickets/nonexistent`, { method: 'DELETE' });
+    expect(res.status).toBe(404);
+  });
 });

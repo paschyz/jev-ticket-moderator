@@ -15,4 +15,8 @@ export class InMemoryTicketRepository implements TicketRepository {
   async findAll(): Promise<Ticket[]> {
     return Array.from(this.tickets.values());
   }
+
+  async deleteById(id: string): Promise<void> {
+    this.tickets.delete(id);
+  }
 }
