@@ -1,8 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { CreateTicketDialog } from '@/components/create-ticket-dialog'
-import { QueueView } from '@/components/queue-view'
-import { StatsBar } from '@/components/stats-bar'
 import { TicketDetail } from '@/components/ticket-detail'
 import { TicketList } from '@/components/ticket-list'
 import { DEFAULT_FILTERS, type FilterState } from '@/hooks/useTicketFilters'
@@ -106,44 +103,21 @@ export default function App() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b px-6 py-3 shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <h1 className="text-base font-semibold tracking-tight">TicketFlow</h1>
-            <StatsBar
-              tickets={tickets}
-              onStatusFilter={status => setFilters(f => ({ ...f, status }))}
-            />
-          </div>
+          <h1 className="text-sm font-semibold tracking-tight">TicketFlow</h1>
           <CreateTicketDialog onCreate={createTicket} />
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto w-full flex flex-1 gap-0 overflow-hidden">
         {/* Left panel */}
-        <aside className="w-80 shrink-0 border-r flex flex-col overflow-hidden">
-          <Tabs defaultValue="list" className="flex flex-col flex-1 overflow-hidden">
-            <div className="px-4 pt-4 pb-2 shrink-0">
-              <TabsList className="w-full">
-                <TabsTrigger value="list" className="flex-1">List</TabsTrigger>
-                <TabsTrigger value="queues" className="flex-1">Queues</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="list" className="flex-1 overflow-hidden px-4 pb-4 mt-0">
-              <TicketList
-                tickets={tickets}
-                selectedId={selectedId}
-                onSelect={selectTicket}
-                filters={filters}
-                onFilterChange={partial => setFilters(f => ({ ...f, ...partial }))}
-              />
-            </TabsContent>
-            <TabsContent value="queues" className="flex-1 overflow-hidden px-4 pb-4 mt-0">
-              <QueueView
-                tickets={tickets}
-                selectedId={selectedId}
-                onSelect={selectTicket}
-              />
-            </TabsContent>
-          </Tabs>
+        <aside className="w-80 shrink-0 border-r flex flex-col overflow-hidden px-4 py-4">
+          <TicketList
+            tickets={tickets}
+            selectedId={selectedId}
+            onSelect={selectTicket}
+            filters={filters}
+            onFilterChange={partial => setFilters(f => ({ ...f, ...partial }))}
+          />
         </aside>
 
         {/* Right panel */}

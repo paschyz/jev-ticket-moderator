@@ -2,7 +2,6 @@ import type { Ticket } from '@/lib/types'
 
 export type FilterState = {
   search: string
-  status: string
   category: string
   urgency: string
   sort: 'newest' | 'oldest' | 'urgency'
@@ -10,7 +9,6 @@ export type FilterState = {
 
 export const DEFAULT_FILTERS: FilterState = {
   search: '',
-  status: 'all',
   category: 'all',
   urgency: 'all',
   sort: 'newest',
@@ -22,7 +20,6 @@ export function applyFilters(tickets: Ticket[], filters: FilterState): Ticket[] 
   return tickets
     .filter(t => {
       if (filters.search && !t.message.toLowerCase().includes(filters.search.toLowerCase())) return false
-      if (filters.status !== 'all' && t.status !== filters.status) return false
       if (filters.category !== 'all' && t.moderation?.category !== filters.category) return false
       if (filters.urgency !== 'all' && t.moderation?.urgency !== filters.urgency) return false
       return true
