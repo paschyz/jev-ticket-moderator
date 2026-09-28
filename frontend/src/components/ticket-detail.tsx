@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DEFAULT_THRESHOLDS } from '@/lib/constants'
-import { statusLabel, statusVariant, urgencyVariant } from '@/lib/ticket-variants'
+import { statusLabel, statusVariant } from '@/lib/ticket-variants'
 import type { Moderation, Ticket } from '@/lib/types'
 import { cn } from 'cn'
 
@@ -34,7 +34,7 @@ function ConfidenceBar({
           <p className="text-xs text-muted-foreground">{label}</p>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" className="p-0.5 -m-0.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+              <button type="button" className="p-0.5 -m-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-pointer transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                 <Info className="w-3 h-3" />
               </button>
             </TooltipTrigger>
@@ -120,8 +120,8 @@ export function TicketDetail({
                 {statusLabel(ticket.status)}
               </Badge>
             )}
-            {m?.urgency && (
-              <Badge variant={urgencyVariant(m.urgency)} className="capitalize">
+            {(m?.urgency === 'critical' || m?.urgency === 'high') && (
+              <Badge variant="destructive" className="capitalize">
                 {m.urgency}
               </Badge>
             )}
@@ -143,8 +143,11 @@ export function TicketDetail({
           </Tooltip>
         </div>
         <p className="text-sm leading-relaxed">{ticket.message}</p>
-        <p className="text-xs text-muted-foreground tabular-nums mt-2">
-          {ticket.id} · {new Date(ticket.createdAt).toLocaleString()}
+        <p className="text-xs text-muted-foreground mt-2">
+          {new Date(ticket.createdAt).toLocaleString()}
+        </p>
+        <p className="text-[11px] text-muted-foreground/50 tabular-nums font-mono mt-0.5">
+          {ticket.id}
         </p>
       </div>
 
@@ -155,7 +158,7 @@ export function TicketDetail({
             type="button"
             onClick={() => setScoresOpen(v => !v)}
             className={cn(
-              'flex items-center justify-between gap-2 w-full text-left rounded-sm',
+              'flex items-center justify-between gap-2 w-full text-left rounded-sm cursor-pointer',
               'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
             )}
           >

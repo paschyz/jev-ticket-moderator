@@ -1,4 +1,5 @@
 import { SlidersHorizontal } from 'lucide-react'
+import { CreateTicketDialog } from '@/components/create-ticket-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PopoverContent, PopoverRoot, PopoverTrigger } from '@/components/ui/popover'
@@ -54,7 +55,7 @@ function TicketRow({ ticket, selected, onClick, accentClass }: {
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full text-left border-l-2 pl-3 pr-3 py-2.5 rounded-r-sm transition-colors',
+        'w-full text-left border-l-2 pl-3 pr-3 py-2.5 rounded-r-sm cursor-pointer transition-colors',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
         accentClass,
         selected ? 'bg-muted' : 'hover:bg-muted/50'
@@ -84,12 +85,14 @@ export function TicketList({
   onSelect,
   filters,
   onFilterChange,
+  onCreate,
 }: {
   tickets: Ticket[]
   selectedId: string | null
   onSelect: (id: string) => void
   filters: FilterState
   onFilterChange: (f: Partial<FilterState>) => void
+  onCreate: (message: string) => Promise<void>
 }) {
   const filtered = applyFilters(tickets, filters)
   const buckets = groupTickets(filtered)
@@ -102,6 +105,8 @@ export function TicketList({
 
   return (
     <div className="flex flex-col gap-2 h-full">
+      <CreateTicketDialog onCreate={onCreate} />
+
       {/* Search + filters */}
       <div className="flex items-center gap-1.5">
         <Input
@@ -179,7 +184,7 @@ export function TicketList({
               type="button"
               onClick={() => onFilterChange({ [f.key]: 'all' })}
               className={cn(
-                'inline-flex items-center gap-1 text-xs bg-muted px-2 py-0.5 rounded-full',
+                'inline-flex items-center gap-1 text-xs bg-muted px-2 py-0.5 rounded-full cursor-pointer',
                 'hover:bg-muted/70 transition-colors capitalize',
                 'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
               )}
@@ -191,7 +196,7 @@ export function TicketList({
           <button
             type="button"
             onClick={() => onFilterChange({ category: 'all', urgency: 'all' })}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm"
+            className="text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm"
           >
             Clear
           </button>

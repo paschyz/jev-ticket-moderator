@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react'
-import { CreateTicketDialog } from '@/components/create-ticket-dialog'
 import { TicketDetail } from '@/components/ticket-detail'
 import { TicketList } from '@/components/ticket-list'
 import { DEFAULT_FILTERS, type FilterState } from '@/hooks/useTicketFilters'
@@ -104,7 +103,6 @@ export default function App() {
       <header className="border-b px-6 py-3 shrink-0">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           <h1 className="text-sm font-semibold tracking-tight">TicketFlow</h1>
-          <CreateTicketDialog onCreate={createTicket} />
         </div>
       </header>
 
@@ -117,6 +115,7 @@ export default function App() {
             onSelect={selectTicket}
             filters={filters}
             onFilterChange={partial => setFilters(f => ({ ...f, ...partial }))}
+            onCreate={createTicket}
           />
         </aside>
 
