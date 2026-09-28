@@ -97,28 +97,34 @@ make check            # All validations (lint + typecheck + architecture + test)
 
 ## Jev Integration
 
-For now, FakeTicketModerator provides realistic responses. When ready:
-1. Create OpenRouter account + get API key
-2. Update `src/infrastructure/jev/jevConfig.ts` with API endpoint
-3. Replace FakeTicketModerator call in AppContainer with JevTicketModerator
-4. No other code changes needed (port abstraction protects rest of system)
+Jev is isolated behind the `TicketModerator` port (`src/ports/ticket-moderator.ts`).
+- `JevTicketModerator` — real adapter, not yet implemented (TODO)
+- `FakeTicketModerator` — test fake in `tests/fakes/`
+
+When ready to connect Jev:
+1. Implement `JevTicketModerator` in `src/infrastructure/jev/`
+2. No other code changes needed (port abstraction protects the rest)
 
 ## Project Structure
 
 ```
 src/
-  domain/          (rules, entities, types — zero dependencies)
-  application/     (use cases, orchestration)
-  ports/           (interfaces)
-  infrastructure/  (Jev, HTTP, persistence adapters)
-  index.ts         (entry point)
+  domain/              (types, entities, routing rules — zero dependencies)
+  ports/               (interfaces: TicketRepository, TicketModerator)
+  application/         (use cases: CreateTicket, ModerateTicket, RouteTicket)
+  infrastructure/
+    jev/               (Jev adapter — implements TicketModerator)
+    persistence/       (InMemoryTicketRepository)
+  presentation/
+    http/              (Express server — thin controllers)
 
 tests/
-  unit/            (domain, no Jev)
-  integration/     (Jev + ports)
-  acceptance/      (HTTP endpoints)
+  unit/                (domain + application, no network)
+  integration/         (adapters with real dependencies)
+  acceptance/          (HTTP endpoints end-to-end)
+  fakes/               (FakeTicketModerator)
 
-docs/
-  adr/             (decision records)
-  architecture/    (schemas, diagrams)
+docs/adr/              (decision records)
+.claude/agents/        (architect, test-writer, reviewer)
+.claude/commands/      (/feature workflow)
 ```

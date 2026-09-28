@@ -48,5 +48,5 @@ typecheck:
 architecture:
 	npm run architecture
 
-check: format lint typecheck architecture test
-	@echo "✅ All checks passed"
+check: typecheck lint architecture test
+	@echo "All checks passed"
