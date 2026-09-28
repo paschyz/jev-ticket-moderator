@@ -14,6 +14,9 @@ help:
 	@echo "  make typecheck           TypeScript strict check"
 	@echo "  make architecture        Check dependency rules"
 	@echo "  make check               Run all validations"
+	@echo "  make frontend-install    Install frontend dependencies"
+	@echo "  make frontend            Run frontend dev server"
+	@echo "  make frontend-build      Build frontend for production"
 
 install:
 	npm install
