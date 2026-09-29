@@ -1,5 +1,9 @@
 import { OpenRouter } from '@openrouter/sdk';
-import { Ticket, TicketModeration } from '../../domain/ticket';
+import {
+  Ticket,
+  TicketCategory,
+  TicketModeration,
+} from '../../domain/ticket';
 import { TicketModerator } from '../../ports/ticket-moderator';
 
 export interface JevConfig {
@@ -13,83 +17,72 @@ export class JevTicketModerator implements TicketModerator {
 
   constructor(config: JevConfig) {
     this.client = new OpenRouter({ apiKey: config.apiKey });
-    this.model = config.model ?? 'typesafe/jev-router';
+    this.model = config.model ?? 'typesafe/jev-latest';
   }
 
   async moderate(ticket: Ticket): Promise<TicketModeration> {
-    const response = await this.client.chat.send({
-      chatRequest: {
+    const noul = (instructions: string, yes: string, no: string) => ({
+      type: 'noul' as const,
+      instructions,
+      criteria: { true: yes, false: no },
+    });
+
+    const response = await this.client.alpha.decisions.create({
+      decisionsRequest: {
         model: this.model,
-        tools: [
-          {
-            function: {
-              name: 'classify_ticket',
-              description:
-                'Classify a support ticket into a category with confidence scores',
-              parameters: {
-                type: 'object',
-                properties: {
-                  category: {
-                    type: 'string',
-                    enum: [
-                      'billing',
-                      'technical',
-                      'account',
-                      'sales',
-                      'other',
-                    ],
-                  },
-                  categoryConfidence: {
-                    type: 'number',
-                    description: 'Confidence in classification (0-1)',
-                  },
-                  urgency: {
-                    type: 'string',
-                    enum: ['low', 'medium', 'high', 'critical'],
-                  },
-                  abusiveProbability: {
-                    type: 'number',
-                    description: 'Probability of abusive content (0-1)',
-                  },
-                  humanReviewProbability: {
-                    type: 'number',
-                    description: 'Probability human review is needed (0-1)',
-                  },
-                },
-                required: [
-                  'category',
-                  'categoryConfidence',
-                  'urgency',
-                  'abusiveProbability',
-                  'humanReviewProbability',
-                ],
-              },
+        state: ticket.message,
+        questions: {
+          category: {
+            type: 'choice' as const,
+            instructions: 'Classify this support ticket into the best category.',
+            criteria: {
+              billing: 'Payment, invoices, charges, subscriptions, refunds',
+              technical: 'Bugs, errors, technical issues, integrations',
+              account: 'Login, access, permissions, profile, settings',
+              sales: 'Pricing, plans, demos, enterprise inquiries',
+              other: 'Anything that does not fit the above categories',
             },
-            type: 'function' as const,
           },
-        ],
-        toolChoice: {
-          function: { name: 'classify_ticket' },
-          type: 'function' as const,
+          urgency: {
+            type: 'choice' as const,
+            instructions: 'Assess the urgency level of this ticket.',
+            criteria: {
+              low: 'General inquiry, no time pressure',
+              medium: 'Needs attention but not blocking',
+              high: 'Blocking issue, needs prompt resolution',
+              critical: 'Service down, data loss, or security incident',
+            },
+          },
+          abusive: noul(
+            'Does this ticket contain abusive or inappropriate content?',
+            'Profanity, insults, threats, harassment, or spam.',
+            'Polite, neutral, or simply frustrated but respectful.',
+          ),
+          humanReview: noul(
+            'Does this need a person, not an automated response?',
+            'Account-specific, urgent, emotional, or needs a manual action.',
+            'A routine request that automation can handle.',
+          ),
         },
-        messages: [
-          {
-            role: 'system' as const,
-            content:
-              'You are a support ticket classifier. Classify tickets accurately with calibrated confidence scores.',
-          },
-          {
-            role: 'user' as const,
-            content: ticket.message,
-          },
-        ],
       },
     });
 
-    if (!('choices' in response)) throw new Error('Unexpected response');
-    const args =
-      response.choices?.[0]?.message?.toolCalls?.[0]?.function?.arguments;
-    if (!args) throw new Error('No classification in response');
-    return JSON.parse(args) as TicketModeration;
+    const categoryAnswer = response.answers['category'];
+    const urgencyAnswer = response.answers['urgency'];
+    const abusiveAnswer = response.answers['abusive'];
+    const humanReviewAnswer = response.answers['humanReview'];
+
+    if (categoryAnswer.type !== 'choice' || urgencyAnswer.type !== 'choice')
+      throw new Error('Unexpected answer type');
+    if (abusiveAnswer.type !== 'noul' || humanReviewAnswer.type !== 'noul')
+      throw new Error('Unexpected answer type');
+
+    return {
+      category: categoryAnswer.choice as TicketCategory,
+      categoryConfidence: categoryAnswer.confidence ?? 0.5,
+      urgency: urgencyAnswer.choice as TicketModeration['urgency'],
+      abusiveProbability: abusiveAnswer.noul,
+      humanReviewProbability: humanReviewAnswer.noul,
+    };
   }
 }
