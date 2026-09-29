@@ -3,6 +3,7 @@ export type TicketCategory =
   | 'technical'
   | 'account'
   | 'sales'
+  | 'abusive'
   | 'other';
 
 export type TicketStatus = 'open' | 'moderated' | 'routed' | 'manual_review';

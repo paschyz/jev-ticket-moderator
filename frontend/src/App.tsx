@@ -82,17 +82,16 @@ export default function App() {
   }
 
   async function overrideRoute(id: string, queue: string) {
-    const ticket = tickets.find(t => t.id === id)
-    if (!ticket?.moderation) return
-    // ponytail: synthetic payload forces routing via existing endpoint; add /override-route if audit trail needed
-    const syntheticModeration: Moderation = {
-      category: queue as Moderation['category'],
-      categoryConfidence: 0.99,
-      urgency: ticket.moderation.urgency,
-      humanReviewProbability: 0.1,
-      abusiveProbability: 0.1,
+    setLoading('Routing...')
+    setError('')
+    try {
+      await post(`/tickets/${id}/override-route`, { queue })
+      await refreshTickets()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Override route failed')
+    } finally {
+      setLoading('')
     }
-    await routeTicket(id, syntheticModeration)
   }
 
   // Initial load

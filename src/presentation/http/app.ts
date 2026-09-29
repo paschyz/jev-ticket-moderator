@@ -62,6 +62,23 @@ export function createApp(deps: {
     }
   });
 
+  app.post('/tickets/:id/override-route', async (req, res) => {
+    try {
+      const { queue } = req.body;
+      if (!queue) return res.status(400).json({ error: 'queue is required' });
+      const ticket = await deps.ticketRepository.findById(req.params.id);
+      if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+      await deps.ticketRepository.save({
+        ...ticket,
+        status: 'routed',
+        routing: { action: 'route', queue },
+      });
+      res.json({ action: 'route', queue });
+    } catch (err) {
+      res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
   app.delete('/tickets/:id', async (req, res) => {
     try {
       await deleteTicket.execute(req.params.id);

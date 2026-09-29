@@ -40,6 +40,7 @@ export class JevTicketModerator implements TicketModerator {
               technical: 'Bugs, errors, technical issues, integrations',
               account: 'Login, access, permissions, profile, settings',
               sales: 'Pricing, plans, demos, enterprise inquiries',
+              abusive: 'Threats, harassment, profanity, spam, or clearly inappropriate content',
               other: 'Anything that does not fit the above categories',
             },
           },

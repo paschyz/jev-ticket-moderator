@@ -17,13 +17,14 @@ export class FakeTicketModerator implements TicketModerator {
   }
 
   private analyzeCategory(text: string): TicketCategory {
-    const scores: Record<TicketCategory, number> = { billing: 0, technical: 0, account: 0, sales: 0, other: 0 };
+    const scores: Record<TicketCategory, number> = { billing: 0, technical: 0, account: 0, sales: 0, abusive: 0, other: 0 };
 
     const keywords: Record<TicketCategory, string[]> = {
       billing: ['billing', 'invoice', 'charge', 'payment', 'refund', 'subscription', 'pricing', 'price', 'cost', 'fee'],
       technical: ['api', 'error', 'bug', 'crash', 'server', 'fail', 'timeout', 'connection', 'login', 'production', '500', '404', 'exception', 'stack trace'],
       account: ['account', 'password', 'username', 'profile', 'email', 'register', 'signup', 'access', 'permission'],
       sales: ['purchase', 'buy', 'upgrade', 'trial', 'demo', 'discount', 'offer'],
+      abusive: ['stupid', 'scam', 'fraud', 'idiot', 'terrible', 'awful', 'worst', 'hate', 'kill', 'threat'],
       other: [],
     };
 

@@ -17,6 +17,7 @@ const BUCKET_META = [
   { key: 'technical',     label: 'Technical',      accent: 'border-l-success',      dot: 'bg-success'             },
   { key: 'account',       label: 'Account',        accent: 'border-l-success',      dot: 'bg-success'             },
   { key: 'sales',         label: 'Sales',          accent: 'border-l-success',      dot: 'bg-success'             },
+  { key: 'abusive',       label: 'Abusive',        accent: 'border-l-destructive',  dot: 'bg-destructive'         },
   { key: 'other',         label: 'Other',          accent: 'border-l-success',      dot: 'bg-success'             },
 ]
 
@@ -139,6 +140,7 @@ export function TicketList({
                   <SelectItem value="technical">Technical</SelectItem>
                   <SelectItem value="account">Account</SelectItem>
                   <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="abusive">Abusive</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>

@@ -200,40 +200,39 @@ export function TicketDetail({
         </div>
       )}
 
-      {/* Routing: manual review reason + override */}
-      {ticket.routing?.action !== 'route' && (ticket.routing || ticket.status === 'manual_review') && (
+      {/* Routing: manual review reason + re-route */}
+      {(ticket.status === 'manual_review' || ticket.status === 'routed') && (
         <div className={cn(
           'border-t border-border pt-5',
-          ticket.routing && 'border-l-2 pl-4 ml-0 border-l-warning',
+          ticket.routing?.action === 'manual_review' && 'border-l-2 pl-4 ml-0 border-l-warning',
         )}>
-          {ticket.routing && (
+          {ticket.routing?.action === 'manual_review' && (
             <p className="text-sm text-warning mb-3">
               {ticket.routing.reason}
             </p>
           )}
-          {ticket.status === 'manual_review' && (
-            <div className="flex gap-2">
-              <Select value={overrideQueue} onValueChange={setOverrideQueue}>
-                <SelectTrigger className="flex-1 h-8 text-sm">
-                  <SelectValue placeholder="Route to queue..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="billing">Billing</SelectItem>
-                  <SelectItem value="technical">Technical</SelectItem>
-                  <SelectItem value="account">Account</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                size="sm"
-                onClick={() => onOverrideRoute(ticket.id, overrideQueue)}
-                disabled={!overrideQueue || !!loading}
-              >
-                Route
-              </Button>
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Select value={overrideQueue} onValueChange={setOverrideQueue}>
+              <SelectTrigger className="flex-1 h-8 text-sm">
+                <SelectValue placeholder="Route to queue..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="billing">Billing</SelectItem>
+                <SelectItem value="technical">Technical</SelectItem>
+                <SelectItem value="account">Account</SelectItem>
+                <SelectItem value="sales">Sales</SelectItem>
+                <SelectItem value="abusive">Abusive</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              onClick={() => onOverrideRoute(ticket.id, overrideQueue)}
+              disabled={!overrideQueue || !!loading}
+            >
+              {ticket.status === 'routed' ? 'Re-route' : 'Route'}
+            </Button>
+          </div>
         </div>
       )}
 

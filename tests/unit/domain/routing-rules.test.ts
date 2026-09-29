@@ -74,4 +74,14 @@ describe('decideRouting', () => {
       reason: 'High human review probability',
     });
   });
+
+  it('sends abusive tickets to manual review regardless of confidence', () => {
+    const decision = decideRouting(
+      buildModeration({ category: 'abusive', categoryConfidence: 0.95, humanReviewProbability: 0.1 }),
+    );
+    expect(decision).toEqual({
+      action: 'manual_review',
+      reason: 'Abusive content detected',
+    });
+  });
 });
