@@ -1,5 +1,7 @@
 import { TicketModeration, RoutingDecision } from './ticket';
 
+export const ABUSIVE_THRESHOLD = 0.5;
+
 export function decideRouting(moderation: TicketModeration): RoutingDecision {
   if (moderation.category === 'abusive') {
     return { action: 'manual_review', reason: 'Abusive content detected' };
