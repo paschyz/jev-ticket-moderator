@@ -27,3 +27,15 @@ export async function del(url: string): Promise<void> {
     throw new Error(err.error || res.statusText)
   }
 }
+
+export async function patch(url: string, body: unknown): Promise<void> {
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || res.statusText)
+  }
+}

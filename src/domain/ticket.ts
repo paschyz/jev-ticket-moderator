@@ -6,6 +6,9 @@ export type TicketCategory =
   | 'abusive'
   | 'other';
 
+export const URGENCIES = ['low', 'medium', 'high', 'critical'] as const;
+export type Urgency = (typeof URGENCIES)[number];
+
 export type TicketStatus = 'open' | 'moderated' | 'routed' | 'manual_review';
 
 export interface Ticket {
@@ -20,7 +23,7 @@ export interface Ticket {
 export interface TicketModeration {
   category: TicketCategory;
   categoryConfidence: number;
-  urgency: 'low' | 'medium' | 'high' | 'critical';
+  urgency: Urgency;
   abusiveProbability: number;
   humanReviewProbability: number;
 }

@@ -13,10 +13,10 @@ const BUCKET_META = [
   { key: 'manual_review', label: 'Needs review',   dot: 'bg-destructive'         },
   { key: 'open',          label: 'Unanalyzed',     dot: 'bg-transparent ring-1 ring-inset ring-muted-foreground/70' },
   { key: 'moderated',     label: 'Awaiting route', dot: 'bg-warning'             },
-  { key: 'billing',       label: 'Billing',        dot: 'bg-muted-foreground/50'             },
-  { key: 'technical',     label: 'Technical',      dot: 'bg-muted-foreground/50'             },
   { key: 'account',       label: 'Account',        dot: 'bg-muted-foreground/50'             },
+  { key: 'billing',       label: 'Billing',        dot: 'bg-muted-foreground/50'             },
   { key: 'sales',         label: 'Sales',          dot: 'bg-muted-foreground/50'             },
+  { key: 'technical',     label: 'Technical',      dot: 'bg-muted-foreground/50'             },
   { key: 'other',         label: 'Other',          dot: 'bg-muted-foreground/50'             },
   { key: 'abusive',       label: 'Abusive · hidden', dot: 'bg-foreground'       },
 ]
@@ -140,11 +140,11 @@ export function TicketList({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Any</SelectItem>
-                  <SelectItem value="billing">Billing</SelectItem>
-                  <SelectItem value="technical">Technical</SelectItem>
-                  <SelectItem value="account">Account</SelectItem>
-                  <SelectItem value="sales">Sales</SelectItem>
                   <SelectItem value="abusive">Abusive</SelectItem>
+                  <SelectItem value="account">Account</SelectItem>
+                  <SelectItem value="billing">Billing</SelectItem>
+                  <SelectItem value="sales">Sales</SelectItem>
+                  <SelectItem value="technical">Technical</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -173,7 +173,7 @@ export function TicketList({
                 <SelectContent>
                   <SelectItem value="newest">Newest first</SelectItem>
                   <SelectItem value="oldest">Oldest first</SelectItem>
-                  <SelectItem value="urgency">By urgency</SelectItem>
+                  <SelectItem value="urgency">Highest urgency first</SelectItem>
                 </SelectContent>
               </Select>
             </div>

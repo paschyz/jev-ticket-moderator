@@ -1,7 +1,11 @@
 import { useState } from 'react'
-import { Check, Info, Loader2, ShieldAlert, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, Check, ChevronRight, Flag, Info, Loader2, MoreHorizontal, ShieldAlert, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
+  DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { DEFAULT_THRESHOLDS } from '@/lib/constants'
@@ -61,6 +65,10 @@ function ConfidenceBar({
   )
 }
 
+const URGENCIES = ['critical', 'high', 'medium', 'low']
+
+const QUEUES = ['abusive', 'account', 'billing', 'sales', 'technical', 'other']
+
 const STEPS = ['Received', 'Analyzed', 'Routed']
 
 function Steps({ status }: { status: string }) {
@@ -68,16 +76,16 @@ function Steps({ status }: { status: string }) {
   const review = status === 'manual_review'
   const current = review ? 'bg-destructive' : status === 'moderated' ? 'bg-warning' : 'bg-primary'
   return (
-    <ol className="grid grid-cols-3 gap-1.5 max-w-xs">
+    <ol className="flex items-center gap-2 text-xs">
       {STEPS.map((label, i) => (
-        <li key={label}>
-          <div className={cn(
-            'h-1 rounded-full transition-colors duration-200 ease-out',
-            i < at || at === 2 ? 'bg-success' : i === at ? current : 'bg-border',
-          )} />
-          <span className={cn('mt-1.5 block text-xs', i > at && 'text-muted-foreground/60', i === at && 'font-medium')}>
+        <li key={label} className="flex items-center gap-2">
+          <span className={cn('flex items-center gap-1.5', i > at && 'text-muted-foreground/60', i === at && at < 2 && 'font-medium')}>
+            {i < at || at === 2
+              ? <Check className="w-3.5 h-3.5 text-success" />
+              : <span className={cn('w-2 h-2 rounded-full', i === at ? current : 'ring-1 ring-inset ring-border')} />}
             {i === 1 && review ? 'Needs review' : label}
           </span>
+          {i < STEPS.length - 1 && <ChevronRight className="w-3 h-3 text-muted-foreground/40" />}
         </li>
       ))}
     </ol>
@@ -100,6 +108,7 @@ export function TicketDetail({
   onModerate,
   onRoute,
   onOverrideRoute,
+  onChangeUrgency,
   onDelete,
   loading,
   error,
@@ -110,6 +119,7 @@ export function TicketDetail({
   onModerate: (id: string) => Promise<void>
   onRoute: (id: string, moderation: Moderation) => Promise<boolean>
   onOverrideRoute: (id: string, queue: string) => Promise<boolean>
+  onChangeUrgency: (id: string, urgency: string) => Promise<void>
   onDelete: (id: string) => Promise<void>
   loading: string
   error: string
@@ -137,9 +147,11 @@ export function TicketDetail({
     setRoutedTo({ id, timer: window.setTimeout(() => setRoutedTo(null), 2000) })
   }
 
-  async function reroute(id: string) {
-    if (await onOverrideRoute(id, overrideQueue)) markRouted(id)
+  async function reroute(id: string, queue: string) {
+    if (await onOverrideRoute(id, queue)) markRouted(id)
   }
+
+  const currentQueue = ticket.routing?.action === 'route' ? ticket.routing.queue : null
 
   async function route(id: string, moderation: Moderation) {
     if (await onRoute(id, moderation)) markRouted(id)
@@ -159,12 +171,8 @@ export function TicketDetail({
       )}
 
       <div>
-        <div
-          aria-hidden={!showProgress}
-          className={cn('grid transition-[grid-template-rows] duration-200 ease-out', showProgress ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}
-        >
-          <div className="overflow-hidden"><div className="pb-4"><Steps status={ticket.status} /></div></div>
-        </div>
+        <div className="flex items-start gap-3">
+        <div className="flex-1 min-w-0">
         {hidden ? (
           <div className="flex items-center justify-between gap-4 rounded-lg border border-dashed border-destructive/30 bg-destructive/5 px-4 py-3">
             <div className="flex items-center gap-2.5 text-sm">
@@ -181,12 +189,56 @@ export function TicketDetail({
             )}
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 mt-4 pt-4 border-t">
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0 -mt-1" aria-label="Ticket actions">
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {m && (
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger disabled={!!loading}><Flag />Priority</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {URGENCIES.map(u => (
+                    <DropdownMenuItem key={u} className="capitalize justify-between" onSelect={() => u !== m.urgency && onChangeUrgency(ticket.id, u)}>
+                      {u}
+                      {u === m.urgency && <Check className="text-muted-foreground" />}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            )}
+            {ticket.status === 'routed' && (
+              <>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger disabled={!!loading}><ArrowRightLeft />Re-route</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {QUEUES.filter(q => q !== currentQueue).map(q => (
+                      <DropdownMenuItem key={q} className="capitalize" onSelect={() => reroute(ticket.id, q)}>{q}</DropdownMenuItem>
+                    ))}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            <DropdownMenuItem
+              destructive
+              disabled={!!loading}
+              onSelect={() => window.confirm('Delete this ticket?') && onDelete(ticket.id)}
+            >
+              <Trash2 />Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        </div>
+        <div className="relative flex flex-wrap items-center justify-between gap-x-6 gap-y-2 mt-4 pt-4 border-t">
           <div className="flex items-center gap-2 flex-wrap">
             {ticket.routing?.action === 'route' && (
-              <Badge key={ticket.routing.queue} variant="success" className={cn('capitalize', justRouted && 'animate-in fade-in-0 zoom-in-95 duration-200')}>Routed · {ticket.routing.queue}</Badge>
+              <Badge key={ticket.routing.queue} variant="success" className={cn('capitalize', justRouted && 'animate-in fade-in-0 zoom-in-95 duration-200')} title="Routed"><Check />{ticket.routing.queue}</Badge>
             )}
-            {m && <Badge variant="outline" className="capitalize">{m.category}</Badge>}
+            {m && m.category !== currentQueue && <Badge variant="outline" className="capitalize">{m.category}</Badge>}
             {m && m.urgency !== 'low' && (
               <Badge variant={urgencyVariant(m.urgency)} className="capitalize">{m.urgency}</Badge>
             )}
@@ -194,21 +246,15 @@ export function TicketDetail({
           <div className="flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
             <time dateTime={ticket.createdAt}>{new Date(ticket.createdAt).toLocaleString()}</time>
             <span className="select-all rounded bg-muted px-1.5 py-0.5">{ticket.id}</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => window.confirm('Delete this ticket?') && onDelete(ticket.id)}
-                  disabled={!!loading}
-                  aria-label="Delete ticket"
-                >
-                  <Trash2 />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Delete</TooltipContent>
-            </Tooltip>
+          </div>
+          <div
+            aria-hidden={!showProgress}
+            className={cn(
+              'absolute inset-x-0 top-4 bottom-0 flex items-center bg-background transition-opacity duration-200 ease-out',
+              showProgress ? 'opacity-100' : 'pointer-events-none opacity-0',
+            )}
+          >
+            <Steps status={ticket.status} />
           </div>
         </div>
       </div>
@@ -247,31 +293,24 @@ export function TicketDetail({
         </Section>
       )}
 
-      {(ticket.status === 'manual_review' || ticket.status === 'routed') && (
-        <Section title={ticket.status === 'routed' ? 'Re-route' : 'Route manually'}>
+      {ticket.status === 'manual_review' && (
+        <Section title="Route manually">
           <div className="flex gap-2">
             <Select value={overrideQueue} onValueChange={setOverrideQueue}>
               <SelectTrigger className="flex-1 h-8 text-sm">
                 <SelectValue placeholder="Route to queue..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="billing">Billing</SelectItem>
-                <SelectItem value="technical">Technical</SelectItem>
-                <SelectItem value="account">Account</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="abusive">Abusive</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                {QUEUES.map(q => <SelectItem key={q} value={q} className="capitalize">{q}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button
-              onClick={() => reroute(ticket.id)}
+              onClick={() => reroute(ticket.id, overrideQueue)}
               disabled={!overrideQueue || !!loading}
-              className={cn('min-w-24 transition-colors', justRouted && 'bg-success text-success-foreground hover:bg-success disabled:opacity-100')}
+              className="min-w-24"
             >
-              <span key={routing ? 'busy' : justRouted ? 'done' : 'idle'} className="inline-flex items-center gap-1.5 animate-in fade-in-0 duration-150">
-                {routing ? <><Loader2 className="animate-spin" />Routing</>
-                  : justRouted ? <><Check />Routed</>
-                  : ticket.status === 'routed' ? 'Re-route' : 'Route'}
+              <span key={routing ? 'busy' : 'idle'} className="inline-flex items-center gap-1.5 animate-in fade-in-0 duration-150">
+                {routing ? <><Loader2 className="animate-spin" />Routing</> : 'Route'}
               </span>
             </Button>
           </div>

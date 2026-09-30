@@ -12,7 +12,7 @@ export const DEFAULT_FILTERS: FilterState = {
   search: '',
   category: 'all',
   urgency: 'all',
-  sort: 'newest',
+  sort: 'urgency',
 }
 
 const URGENCY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }

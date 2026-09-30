@@ -3,7 +3,7 @@ import { CreateTicketDialog } from '@/components/create-ticket-dialog'
 import { TicketDetail } from '@/components/ticket-detail'
 import { TicketList } from '@/components/ticket-list'
 import { DEFAULT_FILTERS, type FilterState } from '@/hooks/useTicketFilters'
-import { del, get, post } from '@/lib/api'
+import { del, get, patch, post } from '@/lib/api'
 import { DEFAULT_THRESHOLDS } from '@/lib/constants'
 import type { Moderation, Ticket } from '@/lib/types'
 
@@ -96,6 +96,19 @@ export default function App() {
     }
   }
 
+  async function changeUrgency(id: string, urgency: string) {
+    setError('')
+    setLoading('Updating priority...')
+    try {
+      await patch(`/tickets/${id}/urgency`, { urgency })
+      await refreshTickets()
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setLoading('')
+    }
+  }
+
   async function overrideRoute(id: string, queue: string): Promise<boolean> {
     setLoading('Routing...')
     setError('')
@@ -156,6 +169,7 @@ export default function App() {
             onModerate={moderateTicket}
             onRoute={routeTicket}
             onOverrideRoute={overrideRoute}
+            onChangeUrgency={changeUrgency}
             onDelete={deleteTicket}
             loading={loading}
             error={error}

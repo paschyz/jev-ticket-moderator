@@ -135,4 +135,39 @@ describe('Ticket moderation flow', () => {
     const res = await fetch(`${baseUrl}/tickets/nonexistent`, { method: 'DELETE' });
     expect(res.status).toBe(404);
   });
+  it('changes the urgency of an analyzed ticket over HTTP', async () => {
+    const created = await (
+      await fetch(`${baseUrl}/tickets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Site is down' }),
+      })
+    ).json();
+    moderator.willReturn({
+      category: 'technical',
+      categoryConfidence: 0.9,
+      urgency: 'low',
+      abusiveProbability: 0.01,
+      humanReviewProbability: 0.1,
+    });
+    await fetch(`${baseUrl}/tickets/${created.id}/moderate`, { method: 'POST' });
+
+    const res = await fetch(`${baseUrl}/tickets/${created.id}/urgency`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urgency: 'critical' }),
+    });
+    expect(res.status).toBe(204);
+
+    const list = await (await fetch(`${baseUrl}/tickets`)).json();
+    const updated = list.find((t: { id: string }) => t.id === created.id);
+    expect(updated.moderation.urgency).toBe('critical');
+
+    const bad = await fetch(`${baseUrl}/tickets/${created.id}/urgency`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ urgency: 'nope' }),
+    });
+    expect(bad.status).toBe(400);
+  });
 });

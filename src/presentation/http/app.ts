@@ -1,5 +1,6 @@
 import express from 'express';
 import { CreateTicket } from '../../application/create-ticket.js';
+import { ChangeUrgency } from '../../application/change-urgency.js';
 import { DeleteTicket } from '../../application/delete-ticket.js';
 import { ListTickets } from '../../application/list-tickets.js';
 import { ModerateTicket } from '../../application/moderate-ticket.js';
@@ -22,6 +23,7 @@ export function createApp(deps: {
   );
   const routeTicket = new RouteTicket(deps.ticketRepository);
   const deleteTicket = new DeleteTicket(deps.ticketRepository);
+  const changeUrgency = new ChangeUrgency(deps.ticketRepository);
 
   app.get('/tickets', async (_req, res) => {
     const tickets = await listTickets.execute();
@@ -76,6 +78,17 @@ export function createApp(deps: {
       res.json({ action: 'route', queue });
     } catch (err) {
       res.status(500).json({ error: (err as Error).message });
+    }
+  });
+
+  app.patch('/tickets/:id/urgency', async (req, res) => {
+    try {
+      await changeUrgency.execute(req.params.id, req.body.urgency);
+      res.status(204).send();
+    } catch (err) {
+      const message = (err as Error).message;
+      const status = message === 'Ticket not found' ? 404 : 400;
+      res.status(status).json({ error: message });
     }
   });
 
