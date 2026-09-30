@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRightLeft, Check, ChevronRight, Flag, Info, Loader2, MoreHorizontal, ShieldAlert, Trash2 } from 'lucide-react'
+import { ArrowRightLeft, Check, ChevronRight, Flag, Info, Loader2, MoreHorizontal, ShieldAlert, Sparkles, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -26,16 +26,16 @@ function barColor(value: number, inverted: boolean) {
 }
 
 function ConfidenceBar({
-  label, value, threshold, inverted = false, tooltip,
+  label, emphasis, value, threshold, inverted = false, tooltip,
 }: {
-  label: string; value: number; threshold: number; inverted?: boolean; tooltip: string
+  label: string; emphasis?: string; value: number; threshold: number; inverted?: boolean; tooltip: string
 }) {
   const color = barColor(value, inverted)
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
-          <p className="text-[13px]">{label}</p>
+          <p className="text-[13px]">{label}{emphasis && <> <strong className="font-semibold capitalize">{emphasis}</strong></>}</p>
           <Tooltip>
             <TooltipTrigger asChild>
               <button type="button" aria-label={`About ${label}`} className="p-0.5 -m-0.5 text-muted-foreground/50 hover:text-muted-foreground cursor-pointer transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -152,6 +152,9 @@ export function TicketDetail({
   }
 
   const currentQueue = ticket.routing?.action === 'route' ? ticket.routing.queue : null
+  const suggested = m?.category
+  const needsHuman = ticket.status === 'manual_review' || ticket.status === 'moderated'
+  const menuQueues = QUEUES.filter(q => q !== currentQueue).sort((a, b) => Number(b === suggested) - Number(a === suggested))
 
   async function route(id: string, moderation: Moderation) {
     if (await onRoute(id, moderation)) markRouted(id)
@@ -210,13 +213,22 @@ export function TicketDetail({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
             )}
-            {ticket.status === 'routed' && (
+            {ticket.status !== 'open' && (
               <>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger disabled={!!loading}><ArrowRightLeft />Re-route</DropdownMenuSubTrigger>
+                  <DropdownMenuSubTrigger disabled={!!loading}>
+                    <ArrowRightLeft />{ticket.status === 'routed' ? 'Re-route' : 'Route to'}
+                  </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
-                    {QUEUES.filter(q => q !== currentQueue).map(q => (
-                      <DropdownMenuItem key={q} className="capitalize" onSelect={() => reroute(ticket.id, q)}>{q}</DropdownMenuItem>
+                    {menuQueues.map(q => (
+                      <DropdownMenuItem
+                        key={q}
+                        className={cn('capitalize justify-between', q === suggested && 'font-medium')}
+                        onSelect={() => reroute(ticket.id, q)}
+                      >
+                        {q}
+                        {q === suggested && <span className="flex items-center gap-1 text-xs font-normal normal-case text-primary"><Sparkles />Jev's pick</span>}
+                      </DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
@@ -270,7 +282,8 @@ export function TicketDetail({
         <Section title="Jev signals">
           <div className="space-y-4">
             <ConfidenceBar
-              label="Classification confidence"
+              label="Classified as"
+              emphasis={m.category}
               value={m.categoryConfidence}
               threshold={thresholds.categoryConfidence}
               tooltip="How confident the AI is about the category. Below threshold triggers manual review."
@@ -293,25 +306,28 @@ export function TicketDetail({
         </Section>
       )}
 
-      {ticket.status === 'manual_review' && (
-        <Section title="Route manually">
-          <div className="flex gap-2">
+      {needsHuman && m && suggested && (
+        <Section title="Route this ticket">
+          <p className="text-sm mb-3">
+            Jev suggests <strong className="font-semibold capitalize">{suggested}</strong>
+            <span className="font-mono text-xs tabular-nums text-muted-foreground"> · {pct(m.categoryConfidence)}% confident</span>
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => reroute(ticket.id, suggested)} disabled={!!loading}>
+              <span key={routing ? 'busy' : 'idle'} className="inline-flex items-center gap-1.5 animate-in fade-in-0 duration-150">
+                {routing ? <><Loader2 className="animate-spin" />Routing</> : <><Check />Confirm {suggested}</>}
+              </span>
+            </Button>
             <Select value={overrideQueue} onValueChange={setOverrideQueue}>
-              <SelectTrigger className="flex-1 h-8 text-sm">
-                <SelectValue placeholder="Route to queue..." />
+              <SelectTrigger className="flex-1 min-w-40 h-8 text-sm">
+                <SelectValue placeholder="Or route elsewhere..." />
               </SelectTrigger>
               <SelectContent>
-                {QUEUES.map(q => <SelectItem key={q} value={q} className="capitalize">{q}</SelectItem>)}
+                {QUEUES.filter(q => q !== suggested).map(q => <SelectItem key={q} value={q} className="capitalize">{q}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button
-              onClick={() => reroute(ticket.id, overrideQueue)}
-              disabled={!overrideQueue || !!loading}
-              className="min-w-24"
-            >
-              <span key={routing ? 'busy' : 'idle'} className="inline-flex items-center gap-1.5 animate-in fade-in-0 duration-150">
-                {routing ? <><Loader2 className="animate-spin" />Routing</> : 'Route'}
-              </span>
+            <Button variant="outline" onClick={() => reroute(ticket.id, overrideQueue)} disabled={!overrideQueue || !!loading}>
+              Route
             </Button>
           </div>
         </Section>
@@ -323,7 +339,7 @@ export function TicketDetail({
         </Button>
       )}
       {ticket.status === 'moderated' && ticket.moderation && (
-        <Button size="lg" className="w-full" onClick={() => route(ticket.id, ticket.moderation!)} disabled={!!loading}>
+        <Button variant="outline" size="lg" className="w-full" onClick={() => route(ticket.id, ticket.moderation!)} disabled={!!loading}>
           Route ticket
         </Button>
       )}
