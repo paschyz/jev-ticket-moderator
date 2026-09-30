@@ -1,11 +1,5 @@
-export function statusVariant(status: string) {
-  switch (status) {
-    case 'routed': return 'success' as const
-    case 'moderated': return 'warning' as const
-    case 'manual_review': return 'destructive' as const
-    default: return 'outline' as const
-  }
-}
+import { DEFAULT_THRESHOLDS } from '@/lib/constants'
+import type { Ticket } from '@/lib/types'
 
 export function urgencyVariant(urgency: string) {
   switch (urgency) {
@@ -15,10 +9,10 @@ export function urgencyVariant(urgency: string) {
   }
 }
 
-export function statusLabel(status: string) {
-  switch (status) {
-    case 'manual_review': return 'Needs review'
-    case 'moderated': return 'Analyzed'
-    default: return status
-  }
+export function isAbusive(t: Ticket) {
+  return (
+    t.moderation?.category === 'abusive' ||
+    (t.moderation?.abusiveProbability ?? 0) >= DEFAULT_THRESHOLDS.abusive ||
+    (t.routing?.action === 'route' && t.routing.queue === 'abusive')
+  )
 }

@@ -6,20 +6,19 @@ AI-powered ticket moderation system for support operations teams. The interface 
 
 ## Palette
 
-| Token | Hex | Role |
-|-------|-----|------|
-| `--primary` | `#1B2A4A` | Deep navy — authority, trust, professionalism |
-| `--primary-foreground` | `#F8FAFC` | Light text on primary |
-| `--accent` | `#2563EB` | Strong blue — interactive elements, links, focus |
-| `--accent-muted` | `#DBEAFE` | Light blue wash — selected states, highlights |
-| `--destructive` | `#DC2626` | Red — high urgency, abusive content flags |
-| `--warning` | `#D97706` | Amber — medium urgency, review needed |
-| `--success` | `#059669` | Emerald — routed, resolved, high confidence |
-| `--background` | `#FFFFFF` | Clean white canvas |
-| `--surface` | `#F8FAFC` | Slate-50 — cards, sidebar |
-| `--border` | `#E2E8F0` | Slate-200 — subtle structure |
-| `--foreground` | `#0F172A` | Slate-900 — body text |
-| `--muted` | `#64748B` | Slate-500 — secondary text, timestamps |
+Warm paper canvas, ink-navy primary, semantic status colors. Tokens live in `src/index.css` (oklch).
+
+| Token | Role |
+|-------|------|
+| `--background` | Warm off-white canvas |
+| `--card` | Pure white — panels, selected row, header |
+| `--primary` | Ink navy — primary action, selected marker |
+| `--muted` / `--muted-foreground` | Hover wash / secondary text |
+| `--border` | Warm hairline |
+| `--destructive` | Needs review, high urgency, abusive |
+| `--warning` | Awaiting route, medium urgency |
+| `--success` | Routed, high confidence |
+| `--ring` | Focus (indigo) |
 
 ## Typography
 
@@ -27,22 +26,34 @@ AI-powered ticket moderation system for support operations teams. The interface 
 - Headings: Geist 600, tracking tight
 - Body: Geist 400, 16px base
 - Data labels: Geist 500, 13px
-- Monospace data (IDs, scores): Geist Mono if available, else tabular-nums
+- Monospace data (IDs, scores, times, counts): system mono stack + tabular-nums
 
 Line height: 1.5 body, 1.2 headings. Max line length: 72ch.
 
+## Color semantics
+
+Color marks what needs a person. Settled states stay quiet.
+
+| Signal | Meaning |
+|--------|---------|
+| Red | Needs review, high/critical urgency |
+| Amber | Analyzed, waiting for you to route |
+| Hollow grey ring | Not analyzed yet |
+| Solid grey dot | Routed queue (billing, technical, ...), no color per category |
+| Ink dot + shield | Abusive, content hidden |
+| Green | The Routed status only (badge, progress, confirmation) |
+
 ## Layout
 
-- **Desktop:** sidebar-left (ticket history, scrollable) + main content (wizard flow)
-- **Mobile:** history stacks above wizard
-- Left-aligned throughout. No centered hero blocks.
-- Cards for ticket items. No numbered markers unless content is sequential.
-- Confidence bars use semantic color (success/warning/destructive by threshold)
-- Status badges: filled background with status color, white text
+- **Desktop:** top bar (brand, live queue counts, New ticket) over a 360px queue + detail split, full viewport height, each pane scrolls independently.
+- **Mobile:** queue stacks above detail (max 45vh).
+- Queue: flat rows with hairline dividers, sticky uppercase group headers, selected row = white card + ink left marker.
+- Detail: progress steps (Received → Analyzed → Routed), message as the headline, always-visible Jev signal meters with threshold ticks, actions in bordered sections.
+- Left-aligned throughout. Radius 0.5rem.
 
 ## Principles
 
 1. **Functional first.** This is a work tool, not a marketing page. Every element earns its space.
 2. **Trust through data.** Show confidence scores, categories, routing reasons. Hide nothing.
 3. **Calm urgency.** Color codes urgency (red/amber/green) without alarm. Support agents see red all day — don't add to the noise.
-4. **No decoration.** No gradients, no shadows deeper than `shadow-sm`, no hover animations on data cards. Motion only on user-triggered actions (submit, expand).
+4. **No decoration.** No gradients, no shadows deeper than `shadow-sm`, no hover animations on data cards. Motion only on user-triggered actions: buttons scale to 0.97 on press (150ms ease-out), meters ease their width (300ms).

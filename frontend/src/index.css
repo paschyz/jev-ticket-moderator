@@ -8,6 +8,9 @@
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
     --color-ring: var(--ring);
     --color-input: var(--input);
     --color-border: var(--border);
@@ -38,32 +41,36 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    --background: oklch(0.982 0.004 90);
+    --foreground: oklch(0.21 0.02 265);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.21 0.02 265);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --success: oklch(0.527 0.154 150);
+    --popover-foreground: oklch(0.21 0.02 265);
+    --primary: oklch(0.27 0.06 265);
+    --primary-foreground: oklch(0.985 0.004 90);
+    --secondary: oklch(0.945 0.008 90);
+    --secondary-foreground: oklch(0.27 0.06 265);
+    --muted: oklch(0.95 0.007 90);
+    --muted-foreground: oklch(0.5 0.015 265);
+    --accent: oklch(0.94 0.02 265);
+    --accent-foreground: oklch(0.27 0.06 265);
+    --destructive: oklch(0.56 0.21 27);
+    --success: oklch(0.6 0.19 142);
     --success-foreground: oklch(0.985 0 0);
-    --warning: oklch(0.61 0.179 55);
+    --warning: oklch(0.58 0.15 65);
     --warning-foreground: oklch(0.145 0 0);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --radius: 0.625rem;
+    --border: oklch(0.9 0.008 90);
+    --input: oklch(0.88 0.008 90);
+    --ring: oklch(0.55 0.15 265);
+    --radius: 0.5rem;
 }
 
 .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
+    --card: oklch(0.19 0 0);
+    --card-foreground: oklch(0.985 0 0);
     --popover: oklch(0.205 0 0);
     --popover-foreground: oklch(0.985 0 0);
     --primary: oklch(0.922 0 0);
@@ -84,6 +91,19 @@
     --ring: oklch(0.556 0 0);
 }
 
+/* Reduced motion: keep fades, drop scale/slide from tw-animate overlays and press feedback */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    --tw-enter-scale: 1;
+    --tw-enter-translate-x: 0;
+    --tw-enter-translate-y: 0;
+    --tw-exit-scale: 1;
+    --tw-exit-translate-x: 0;
+    --tw-exit-translate-y: 0;
+  }
+  button:active { scale: 1 !important; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -92,6 +112,6 @@
     @apply bg-background text-foreground;
     }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
     }
 }

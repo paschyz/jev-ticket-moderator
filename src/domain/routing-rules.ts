@@ -3,7 +3,10 @@ import { TicketModeration, RoutingDecision } from './ticket.js';
 export const ABUSIVE_THRESHOLD = 0.5;
 
 export function decideRouting(moderation: TicketModeration): RoutingDecision {
-  if (moderation.category === 'abusive') {
+  if (
+    moderation.category === 'abusive' ||
+    moderation.abusiveProbability >= ABUSIVE_THRESHOLD
+  ) {
     return { action: 'manual_review', reason: 'Abusive content detected' };
   }
   if (moderation.categoryConfidence < 0.7) {

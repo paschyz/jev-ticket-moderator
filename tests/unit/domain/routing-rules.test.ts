@@ -84,4 +84,24 @@ describe('decideRouting', () => {
       reason: 'Abusive content detected',
     });
   });
+  it('sends to manual review when abusive probability >= 0.50 even if the category is not abusive', () => {
+    const decision = decideRouting(buildModeration({ abusiveProbability: 0.8 }));
+    expect(decision).toEqual({
+      action: 'manual_review',
+      reason: 'Abusive content detected',
+    });
+  });
+
+  it('treats exactly 0.50 abusive probability as abusive', () => {
+    const decision = decideRouting(buildModeration({ abusiveProbability: 0.5 }));
+    expect(decision).toEqual({
+      action: 'manual_review',
+      reason: 'Abusive content detected',
+    });
+  });
+
+  it('routes normally just below the abusive threshold', () => {
+    const decision = decideRouting(buildModeration({ abusiveProbability: 0.49 }));
+    expect(decision).toEqual({ action: 'route', queue: 'billing' });
+  });
 });

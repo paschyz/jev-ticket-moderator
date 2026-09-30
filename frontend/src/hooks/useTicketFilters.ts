@@ -1,3 +1,4 @@
+import { isAbusive } from '@/lib/ticket-variants'
 import type { Ticket } from '@/lib/types'
 
 export type FilterState = {
@@ -19,7 +20,10 @@ const URGENCY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2,
 export function applyFilters(tickets: Ticket[], filters: FilterState): Ticket[] {
   return tickets
     .filter(t => {
-      if (filters.search && !t.message.toLowerCase().includes(filters.search.toLowerCase())) return false
+      const q = filters.search.trim().toLowerCase()
+      // abusive content is never searchable by text, only by id
+      const textMatch = !isAbusive(t) && t.message.toLowerCase().includes(q)
+      if (q && !textMatch && !t.id.toLowerCase().includes(q)) return false
       if (filters.category !== 'all' && t.moderation?.category !== filters.category) return false
       if (filters.urgency !== 'all' && t.moderation?.urgency !== filters.urgency) return false
       return true
