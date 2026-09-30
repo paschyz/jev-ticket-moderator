@@ -1,4 +1,4 @@
-import { Ticket } from '../domain/ticket';
+import { Ticket } from '../domain/ticket.js';
 
 export interface TicketRepository {
   save(ticket: Ticket): Promise<void>;

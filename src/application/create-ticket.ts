@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Ticket } from '../domain/ticket';
-import { TicketRepository } from '../ports/ticket-repository';
+import { Ticket } from '../domain/ticket.js';
+import { TicketRepository } from '../ports/ticket-repository.js';
 
 export class CreateTicket {
   constructor(private ticketRepository: TicketRepository) {}

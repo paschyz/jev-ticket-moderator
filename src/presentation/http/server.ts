@@ -1,6 +1,6 @@
-import { createApp } from './app';
-import { InMemoryTicketRepository } from '../../infrastructure/persistence/in-memory-ticket-repository';
-import { JevTicketModerator } from '../../infrastructure/jev/jev-ticket-moderator';
+import { createApp } from './app.js';
+import { InMemoryTicketRepository } from '../../infrastructure/persistence/in-memory-ticket-repository.js';
+import { JevTicketModerator } from '../../infrastructure/jev/jev-ticket-moderator.js';
 
 const app = createApp({
   ticketRepository: new InMemoryTicketRepository(),

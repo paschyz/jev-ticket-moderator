@@ -3,8 +3,8 @@ import {
   Ticket,
   TicketCategory,
   TicketModeration,
-} from '../../domain/ticket';
-import { TicketModerator } from '../../ports/ticket-moderator';
+} from '../../domain/ticket.js';
+import { TicketModerator } from '../../ports/ticket-moderator.js';
 
 export interface JevConfig {
   apiKey: string;

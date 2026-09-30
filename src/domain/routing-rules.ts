@@ -1,4 +1,4 @@
-import { TicketModeration, RoutingDecision } from './ticket';
+import { TicketModeration, RoutingDecision } from './ticket.js';
 
 export const ABUSIVE_THRESHOLD = 0.5;
 

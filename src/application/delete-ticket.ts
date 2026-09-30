@@ -1,4 +1,4 @@
-import { TicketRepository } from '../ports/ticket-repository';
+import { TicketRepository } from '../ports/ticket-repository.js';
 
 export class DeleteTicket {
   constructor(private ticketRepository: TicketRepository) {}

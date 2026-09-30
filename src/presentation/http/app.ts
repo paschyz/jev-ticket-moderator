@@ -1,11 +1,11 @@
 import express from 'express';
-import { CreateTicket } from '../../application/create-ticket';
-import { DeleteTicket } from '../../application/delete-ticket';
-import { ListTickets } from '../../application/list-tickets';
-import { ModerateTicket } from '../../application/moderate-ticket';
-import { RouteTicket } from '../../application/route-ticket';
-import { TicketRepository } from '../../ports/ticket-repository';
-import { TicketModerator } from '../../ports/ticket-moderator';
+import { CreateTicket } from '../../application/create-ticket.js';
+import { DeleteTicket } from '../../application/delete-ticket.js';
+import { ListTickets } from '../../application/list-tickets.js';
+import { ModerateTicket } from '../../application/moderate-ticket.js';
+import { RouteTicket } from '../../application/route-ticket.js';
+import { TicketRepository } from '../../ports/ticket-repository.js';
+import { TicketModerator } from '../../ports/ticket-moderator.js';
 
 export function createApp(deps: {
   ticketRepository: TicketRepository;

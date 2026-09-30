@@ -1,6 +1,6 @@
-import { TicketModeration, RoutingDecision } from '../domain/ticket';
-import { decideRouting } from '../domain/routing-rules';
-import { TicketRepository } from '../ports/ticket-repository';
+import { TicketModeration, RoutingDecision } from '../domain/ticket.js';
+import { decideRouting } from '../domain/routing-rules.js';
+import { TicketRepository } from '../ports/ticket-repository.js';
 
 export class RouteTicket {
   constructor(private ticketRepository: TicketRepository) {}

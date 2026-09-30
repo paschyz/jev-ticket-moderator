@@ -1,7 +1,7 @@
-import { TicketModeration } from '../domain/ticket';
-import { ABUSIVE_THRESHOLD } from '../domain/routing-rules';
-import { TicketRepository } from '../ports/ticket-repository';
-import { TicketModerator } from '../ports/ticket-moderator';
+import { TicketModeration } from '../domain/ticket.js';
+import { ABUSIVE_THRESHOLD } from '../domain/routing-rules.js';
+import { TicketRepository } from '../ports/ticket-repository.js';
+import { TicketModerator } from '../ports/ticket-moderator.js';
 
 export class ModerateTicket {
   constructor(

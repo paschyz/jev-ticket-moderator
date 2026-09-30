@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApp } from '../src/presentation/http/app';
-import { InMemoryTicketRepository } from '../src/infrastructure/persistence/in-memory-ticket-repository';
-import { JevTicketModerator } from '../src/infrastructure/jev/jev-ticket-moderator';
+import { createApp } from '../src/presentation/http/app.js';
+import { InMemoryTicketRepository } from '../src/infrastructure/persistence/in-memory-ticket-repository.js';
+import { JevTicketModerator } from '../src/infrastructure/jev/jev-ticket-moderator.js';
 
 const app = createApp({
   ticketRepository: new InMemoryTicketRepository(),

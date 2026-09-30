@@ -1,5 +1,5 @@
-import { Ticket, TicketCategory, TicketModeration } from '../../domain/ticket';
-import { TicketModerator } from '../../ports/ticket-moderator';
+import { Ticket, TicketCategory, TicketModeration } from '../../domain/ticket.js';
+import { TicketModerator } from '../../ports/ticket-moderator.js';
 
 export class FakeTicketModerator implements TicketModerator {
   async moderate(ticket: Ticket): Promise<TicketModeration> {
