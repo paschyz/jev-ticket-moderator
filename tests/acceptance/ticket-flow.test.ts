@@ -25,7 +25,7 @@ describe('Ticket moderation flow', () => {
     server.close();
   });
 
-  it('creates, moderates, and routes a ticket to the right queue', async () => {
+  it('creates a ticket and auto-routes it to the right queue when analysis is confident', async () => {
     const createRes = await fetch(`${baseUrl}/tickets`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -52,14 +52,10 @@ describe('Ticket moderation flow', () => {
     const moderation = await modRes.json();
     expect(moderation.category).toBe('billing');
 
-    const routeRes = await fetch(`${baseUrl}/tickets/${ticket.id}/route`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ moderation }),
-    });
-    expect(routeRes.status).toBe(200);
-    const decision = await routeRes.json();
-    expect(decision).toEqual({ action: 'route', queue: 'billing' });
+    const listed = await (await fetch(`${baseUrl}/tickets`)).json();
+    const saved = listed.find((t: { id: string }) => t.id === ticket.id);
+    expect(saved.status).toBe('routed');
+    expect(saved.routing).toEqual({ action: 'route', queue: 'billing' });
   });
 
   it('routes to manual review when confidence is low', async () => {

@@ -35,24 +35,52 @@ describe('ModerateTicket', () => {
     expect(moderation.categoryConfidence).toBe(0.9);
   });
 
-  it('updates ticket status to moderated', async () => {
-    const repository = new InMemoryTicketRepository();
-    const moderator = new FakeTicketModerator();
-    const useCase = new ModerateTicket(repository, moderator);
-
-    await repository.save(buildTicket());
-    moderator.willReturn({
-      category: 'billing',
-      categoryConfidence: 0.8,
-      urgency: 'low',
+  describe('routing right after analysis', () => {
+    const passing = {
+      category: 'billing' as const,
+      categoryConfidence: 0.9,
+      urgency: 'low' as const,
       abusiveProbability: 0.01,
-      humanReviewProbability: 0.05,
+      humanReviewProbability: 0.1,
+    };
+
+    async function moderateWith(moderation: typeof passing | Record<string, unknown>) {
+      const repository = new InMemoryTicketRepository();
+      const moderator = new FakeTicketModerator();
+      await repository.save(buildTicket());
+      moderator.willReturn({ ...passing, ...moderation } as typeof passing);
+      await new ModerateTicket(repository, moderator).execute('ticket-1');
+      return repository.findById('ticket-1');
+    }
+
+    it('routes to the category queue when every gate passes', async () => {
+      const ticket = await moderateWith({});
+
+      expect(ticket?.status).toBe('routed');
+      expect(ticket?.routing).toEqual({ action: 'route', queue: 'billing' });
+      expect(ticket?.moderation?.category).toBe('billing');
     });
 
-    await useCase.execute('ticket-1');
+    it('waits for a person when classification confidence is low', async () => {
+      const ticket = await moderateWith({ categoryConfidence: 0.5 });
 
-    const ticket = await repository.findById('ticket-1');
-    expect(ticket?.status).toBe('moderated');
+      expect(ticket?.status).toBe('moderated');
+      expect(ticket?.routing).toBeUndefined();
+    });
+
+    it('waits for a person when human review probability is high', async () => {
+      const ticket = await moderateWith({ humanReviewProbability: 0.8 });
+
+      expect(ticket?.status).toBe('moderated');
+      expect(ticket?.routing).toBeUndefined();
+    });
+
+    it('still routes abusive tickets straight to the abusive queue', async () => {
+      const ticket = await moderateWith({ abusiveProbability: 0.9 });
+
+      expect(ticket?.status).toBe('routed');
+      expect(ticket?.routing).toEqual({ action: 'route', queue: 'abusive' });
+    });
   });
 
   it('throws when ticket not found', async () => {
