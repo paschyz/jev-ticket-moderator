@@ -1,9 +1,10 @@
 import { createApp } from './app.js';
 import { InMemoryTicketRepository } from '../../infrastructure/persistence/in-memory-ticket-repository.js';
+import { starterTickets } from '../../infrastructure/persistence/starter-tickets.js';
 import { JevTicketModerator } from '../../infrastructure/jev/jev-ticket-moderator.js';
 
 const app = createApp({
-  ticketRepository: new InMemoryTicketRepository(),
+  ticketRepository: new InMemoryTicketRepository(starterTickets(new Date())),
   ticketModerator: new JevTicketModerator({
     apiKey: process.env.OPENROUTER_API_KEY ?? '',
     model: process.env.OPENROUTER_MODEL,

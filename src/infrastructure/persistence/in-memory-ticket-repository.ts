@@ -2,7 +2,11 @@ import { Ticket } from '../../domain/ticket.js';
 import { TicketRepository } from '../../ports/ticket-repository.js';
 
 export class InMemoryTicketRepository implements TicketRepository {
-  private tickets = new Map<string, Ticket>();
+  private tickets: Map<string, Ticket>;
+
+  constructor(initial: Ticket[] = []) {
+    this.tickets = new Map(initial.map((t) => [t.id, t]));
+  }
 
   async save(ticket: Ticket): Promise<void> {
     this.tickets.set(ticket.id, ticket);

@@ -1,11 +1,29 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CreateTicketDialog } from '@/components/create-ticket-dialog'
+import { Overview } from '@/components/overview'
 import { TicketDetail } from '@/components/ticket-detail'
 import { TicketList } from '@/components/ticket-list'
 import { DEFAULT_FILTERS, type FilterState } from '@/hooks/useTicketFilters'
 import { del, get, patch, post } from '@/lib/api'
 import { DEFAULT_THRESHOLDS } from '@/lib/constants'
 import type { Moderation, Ticket } from '@/lib/types'
+import { cn } from 'cn'
+
+// hash routing: '#/overview' is the overview, anything else is the ticket workspace
+function useView() {
+  const [hash, setHash] = useState(() => window.location.hash)
+  useEffect(() => {
+    const onChange = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', onChange)
+    return () => window.removeEventListener('hashchange', onChange)
+  }, [])
+  return hash === '#/overview' ? 'overview' : 'tickets'
+}
+
+const NAV = [
+  { view: 'tickets', label: 'Tickets', href: '#/' },
+  { view: 'overview', label: 'Overview', href: '#/overview' },
+]
 
 export default function App() {
   const [tickets, setTickets] = useState<Ticket[]>([])
@@ -23,6 +41,7 @@ export default function App() {
     flashTimer.current = window.setTimeout(() => setFlashId(null), 2500)
   }
 
+  const view = useView()
   const thresholds = DEFAULT_THRESHOLDS
 
   const refreshTickets = useCallback(async (): Promise<Ticket[]> => {
@@ -139,7 +158,23 @@ export default function App() {
     <div className="h-screen bg-background flex flex-col">
       <header className="border-b bg-card px-5 h-14 shrink-0 flex items-center gap-6">
         <h1 className="text-[15px] font-semibold tracking-tight">TicketFlow</h1>
-        <dl className="hidden md:flex items-center gap-6 flex-1">
+        <nav className="flex self-stretch gap-1" aria-label="Pages">
+          {NAV.map(n => (
+            <a
+              key={n.view}
+              href={n.href}
+              aria-current={view === n.view ? 'page' : undefined}
+              className={cn(
+                'flex items-center px-3 text-sm border-b-2 -mb-px transition-colors duration-150',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                view === n.view ? 'border-primary text-foreground font-medium' : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {n.label}
+            </a>
+          ))}
+        </nav>
+        <dl className={cn('hidden items-center gap-6 flex-1', view === 'tickets' && 'md:flex')}>
           {stats.map(s => (
             <div key={s.label} className="flex items-baseline gap-1.5">
               <dd className={`font-mono text-sm font-medium tabular-nums ${s.tone}`}>{s.n}</dd>
@@ -150,6 +185,14 @@ export default function App() {
         <div className="ml-auto"><CreateTicketDialog onCreate={createTicket} /></div>
       </header>
 
+      {view === 'overview' ? (
+        <main className="flex-1 overflow-y-auto min-h-0">
+          <Overview
+            tickets={tickets}
+            onOpen={id => { selectTicket(id); window.location.hash = '#/' }}
+          />
+        </main>
+      ) : (
       <div className="flex flex-1 min-h-0 flex-col md:flex-row">
         <aside className="md:w-90 shrink-0 border-b md:border-b-0 md:border-r flex flex-col min-h-0 max-h-[45vh] md:max-h-none">
           <TicketList
@@ -176,6 +219,7 @@ export default function App() {
           />
         </main>
       </div>
+      )}
     </div>
   )
 }
